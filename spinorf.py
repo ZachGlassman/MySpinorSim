@@ -146,8 +146,13 @@ for m in range(mag-mag_range,mag+mag_range):
     steps_to_count +=1     
 
 print(norm)
-outstring = '{:<15}{:<15}{:<15}'
-with open('results.txt', 'w') as fp:    
+outstring = '{:<15}{:<15}{:<15}\n'
+infostring = '{0}={:>15}\n'
+with open('results.txt', 'w') as fp:   
+    fp.write(infostring.format('Species','23Na'))
+    fp.write(infostring.format('B Field (muT)',b_field))
+    fp.write(infostring.format('N_0', n_0))
+    fp.write(infostring.format('C_init',c_init))
     fp.write(outstring.format('t(s)','mean','stddev'))
     for time_step in range(len(sum_of_means)):
         t = time[time_step]
