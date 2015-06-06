@@ -1,0 +1,391 @@
+program quantumspinor
+use mod_Hamiltonian
+implicit none
+integer :: find_nmax      !function taken from Hamiltonian.f
+integer ::  n_max         ! computed size of the Hamiltonian
+real*8 ::  Magnetization, N0 !Magnetization is an AVERAGE VALUE
+real*8 :: TotalAtomNumber !These are all average values
+integer ::  AtomRange, MagRange
+real*8 :: Bfield,C_init
+real*8 :: Eqz,Emw_init
+complex*16 :: alpha_zero
+complex*16 :: alpha_plus
+complex*16 :: alpha_minus
+real*8 :: n_zero
+real*8 :: n_minus
+real*8 :: n_plus
+real*8 :: n_zero_min
+integer :: j_min
+integer :: j_max
+real*8 :: PI
+complex*16 :: ln_minus    !see comments in do loop                 
+complex*16 :: ln_plus                 
+complex*16 :: ln_zero
+real*8 :: norm_factor
+complex*16 :: sum_ln,ln_coef,coef
+real*8 :: sum_coef, normForThisM
+character(LEN=4) :: species
+character(LEN=25) :: InitialStateSolver,Propagator
+character(LEN=128) :: wavefunctionName
+logical :: debug,writeWavefunction
+namelist /input/ species,Bfield,C_init,InitialStateSolver,Propagator,Magnetization,TotalAtomNumber,N0,SpinorPhase,MagRange,AtomRange,debug,writeWavefunction,wavefunctionName
+real*8 :: dt, Scaled_dt
+integer, parameter :: ndivmax=5
+integer :: ndiv
+real*8, dimension(ndivmax) :: Emw,C,Deltat
+integer, dimension(ndivmax) :: ntstep
+namelist /timeseries/ ndiv, Emw,Deltat,C,ntstep
+real*8 :: Emin,Emax
+real*8, allocatable, dimension(:) :: Energy
+real*8, allocatable, dimension(:,:) :: z
+complex*16, allocatable, dimension(:) :: State
+integer :: interval, i, j, it, nev, iunit, k
+real*8 :: Y, Y1, q, t, tlocalScaled, mean,meansq,TwoPi
+complex*16 :: X
+integer :: numTimeSteps, tStep ! total num. timesteps and current time step number
+real*8, allocatable, dimension(:) :: sum_of_means, norm ! accumulate mean and norm
+real*8, allocatable, dimension(:) :: sum_of_meansq ! accumulate mean-square at each t
+real*8, allocatable, dimension(:) :: time ! this will hold the real time for each step
+real*8, allocatable, dimension(:) :: density ! this will hold the probability density as a function of n0 and time   
+integer :: m              !magnetization to loop over
+integer :: AtomN          !Atom Number to loop over
+real*8 :: SpinorPhase     !relative phase in radians, theta=2 theta_0 - theta_1 - theta_-1
+integer :: j_low,j_high	!indices beyond which to set coefficients to zero
+integer :: fact			!factorial function for n<=8 only
+InitialStateSolver='Coherent_State' ! only 'Coherent State' in this version
+Propagator='Chebychev'    ! only Chebychev in this version
+species='Na'
+Bfield=0d0                ! magnetic field in  muT
+TotalAtomNumber=400
+Magnetization=0
+MagRange=10               ! Range of magnetizations to include
+AtomRange=1               !Range for atom Number variance
+SpinorPhase=0d0
+N0=380                 ! in Hz
+C_init=30d0               ! in Hz
+debug=.false.
+writeWavefunction=.true.
+wavefunctionName='density.dat'
+read(5,nml=input)
+select case(InitialStateSolver)
+case('Coherent_State','coherent_state')
+InitialStateSolver='Coherent_State'
+case DEFAULT
+write(6,*) 'Incorrect InitialStateSolver'
+write(6,*) 'Only Coherent State allowed in this version'
+stop
+end select
+select case(Propagator)
+case('Chebychev','chebychev') 
+Propagator='Chebychev'
+case DEFAULT
+write(6,*) 'Incorrect Propagator'
+write(6,*) 'Only Chebychev allowed'
+stop
+end select
+select case(species)
+case('Na','23Na') 
+species='23Na'
+Eqz=0.02768d0*(Bfield)**2 ! in Hz
+case('Rb','87Rb') 
+species='87Rb'
+Eqz=0.007189d0*(Bfield)**2 ! in Hz
+case DEFAULT
+write(6,*) 'Incorrect species'
+write(6,*) 'Try Na, 23Na, Rb, or 87Rb'
+stop
+end select
+write(6,*) '#            species= ',species
+write(6,*) '#        Bfield(muT)= ',Bfield
+write(6,*) '#                 N0= ',N0
+write(6,*) '#         C_init(Hz)= ',C_init
+write(6,*) '#    TotalAtomNumber= ',TotalAtomNumber
+write(6,*) '#      Magnetization= ',Magnetization
+write(6,*) '#          AtomRange= ',AtomRange
+write(6,*) '#           MagRange= ',MagRange
+write(6,*) '#        SpinorPhase= ',SpinorPhase
+write(6,*) '# InitialStateSolver= ',InitialStateSolver
+write(6,*) '#         Propagator= ',Propagator
+write(6,*) '#              debug= ',debug
+write(6,*) '#  writeWavefunction= ',writeWavefunction
+write(6,*) '#   wavefunctionName= ',wavefunctionName
+write(6,*) '#'
+if(TotalAtomNumber.le.0) then
+    write(6,*)  'TotalAtomNumber is less then two.',' Try TotalAtomNumber>1'
+    stop
+endif
+select case(InitialStateSolver)
+case('Coherent_State')
+if((N0.lt.0).or.(N0.gt.TotalAtomNumber)) then
+    write(6,*) 'N in m=0 must be >= zero and smaller than N' 
+    stop
+endif
+case DEFAULT
+end select
+if (Bfield.lt.0d0) then
+    write(6,*)  'The magnetic field must be positive'
+    stop
+endif
+if (abs(Magnetization).gt.TotalAtomNumber) then
+    write(6,*) 'Absolute value of Magnetization must be less',' than total atom number'
+    stop
+endif
+ndiv=1                    ! number of time intervals, must be less than ndivmax
+Deltat=(/0.01d0,0d0,0d0,0d0,0d0/) ! time intervals in seconds
+Emw=(/-5d0,0d0,0d0,0d0,0d0/) ! list Emw (Hz) in a time interval
+C=(/C_init,0d0,0d0,0d0,0d0/) ! list C (Hz) in a time interval
+ntstep=(/20,0,0,0,0/)     ! number of time steps in an interval
+read(5,nml=timeseries) 
+if(ndiv.lt.0) ndiv=0
+if(ndiv.gt.ndivmax) then
+    write(6,*) 'Too Many Time intervals. ','Increase ndivmax in the code.'
+    stop
+endif
+do interval=1,ndiv
+    if(ntstep(interval).le.0) ntstep(interval)=1
+enddo
+write(6,*) '#     \Delta t(s)            Emw(Hz)           q(Hz)','           C(Hz)        #steps'
+do interval=1,ndiv
+    write(6,*) '# ',Deltat(interval),Emw(interval),Eqz+Emw(interval),C(interval),ntstep(interval)
+enddo
+write(6,*) '# m weight'
+t=0d0
+numTimeSteps=1
+do interval=1,ndiv
+    numTimeSteps=numTimeSteps+ntstep(interval)
+enddo
+allocate(sum_of_means(1:numTimeSteps))
+allocate(sum_of_meansq(1:numTimeSteps))
+allocate(norm(1:numTimeSteps))
+allocate(time(1:numTimeSteps))
+do i=1,numTimeSteps
+    sum_of_means(i)=0
+    sum_of_meansq(i)=0
+    norm(i)=0
+    time(i)=0
+enddo
+if (writeWavefunction) then
+    allocate(density(1:(numTimeSteps*(INT(TotalAtomNumber)+AtomRange+1))))
+    do i=1,numTimeSteps
+        do k=1,INT(TotalAtomNumber)+AtomRange+1
+            density((i-1)*(INT(TotalAtomNumber)+AtomRange+1)+k)=0
+        enddo
+    enddo
+endif
+PI=4*ATAN(1.0d0)          !needed for Stirling approximation
+if(N0.lt.1d-20) then 
+    alpha_zero=dcmplx(0.0d0,0.0d0) 
+    else
+    alpha_zero=dsqrt(dble(N0))*EXP(dcmplx(0d0,SpinorPhase/2))
+endif
+if(TotalAtomNumber-N0+Magnetization.lt.1d-20) then 
+    alpha_plus=dcmplx(0.0d0,0.0d0) 
+    else
+    alpha_plus=dcmplx(dsqrt(dble(Magnetization+(TotalAtomNumber-N0-Magnetization)/2.0d0)),0d0)
+endif
+if(TotalAtomNumber-N0-Magnetization.lt.1d-20) then 
+    alpha_minus=dcmplx(0.0d0,0.0d0)
+    else
+    alpha_minus=dcmplx(dsqrt(dble(TotalAtomNumber-N0-Magnetization)/2.0d0),0d0)
+endif
+norm_factor=0.5d0*((ABS(alpha_minus)**2)+(ABS(alpha_zero)**2)+(ABS(alpha_plus)**2))
+do m=INT(Magnetization)-MagRange,INT(Magnetization)+MagRange,1
+    normForThisM=0d0
+    do AtomN=INT(TotalAtomNumber)-AtomRange,INT(TotalAtomNumber)+AtomRange,1
+        if (AtomN.ge.(ABS(m)))THEN
+        !This ensures only the allowed magnetizations for a given atom number
+        n_max=find_nmax(AtomN,m)
+        call setup_ScaledH(q,C(1),AtomN,m,n_max,Emin,Emax)
+        allocate(State(n_max))
+        do i=1,n_max,1
+            State(i)=dcmplx(0d0,0d0)
+            end do
+            sum_coef=0.0d0
+            j_low=MAX(1,NINT((N0-4*dsqrt(dble(N0)))/2.0))
+            j_high=MIN(n_max,NINT((N0+4*dsqrt(dble(N0)))/2.0)) 
+            do j=1,n_max       !j is index in statevector, different from n values
+                n_zero_min=mod(AtomN-abs(m),2)
+                n_zero=n_zero_min+2*(j-1)
+                n_minus=(AtomN-n_zero-m)/2.0d0
+                n_plus=m+n_minus
+                if((n_minus.ge.0).and.(n_plus.ge.0).and.(n_zero.ge.0))then
+                    if(alpha_minus.eq.dcmplx(0.0d0,0.0d0)) then
+                        if (n_minus.eq.0) then 
+                            ln_minus=dcmplx(0d0,0d0) 
+                            else
+                            ln_minus=dcmplx(-1d200,0.0d0)
+                        endif
+                        else if(n_minus.ge.7) then
+                        ln_minus=n_minus*Log(alpha_minus)-0.5d0*(n_minus*Log(n_minus)-n_minus+0.5d0*Log(2*Pi*n_minus))
+                        else
+                        ln_minus=n_minus*Log(alpha_minus)-0.5d0*Log(dble(fact(NINT(n_minus))))
+                    endif
+                    if(alpha_plus.eq.dcmplx(0.0d0,0.0d0)) then
+                        if (n_plus.eq.0) then 
+                            ln_plus=dcmplx(0d0,0d0) 
+                            else
+                            ln_plus=dcmplx(-1d200,0d0)
+                        endif
+                        else if(n_plus.ge.7) then
+                        ln_plus=n_plus*Log(alpha_plus)-0.5d0*(n_plus*Log(n_plus)-n_plus+0.5d0*Log(2*Pi*n_plus))
+                        else
+                        ln_plus=n_plus*Log(alpha_plus)-0.5d0*		        Log(dble(fact(NINT(n_plus))))
+                    endif
+                    if(alpha_zero.eq.dcmplx(0.0d0,0.0d0)) then
+                        if (n_zero.eq.0) then 
+                            ln_zero=dcmplx(0d0,0d0) 
+                            else
+                            ln_zero=dcmplx(-1d200,0d0)
+                        endif
+                        else if(n_zero.ge.7) then
+                        ln_zero=n_zero*Log(alpha_zero)-0.5d0*(n_zero*Log(n_zero)-n_zero+0.5d0*Log(2*Pi*n_zero))
+                        else
+                        ln_zero=n_zero*Log(alpha_zero)-0.5d0*		        Log(dble(fact(NINT(n_zero))))
+                    endif
+                    sum_ln=ln_minus+ln_plus+ln_zero
+                    ln_coef=sum_ln-norm_factor
+                    coef=EXP(ln_coef)
+                    state(j)=coef
+                    else
+                    state(j)=dcmplx(0.0d0,0.0d0)
+                endif ! n larger equal zero?
+            enddo  ! j loop             
+            TwoPi=datan(1d0)*8d0
+            t=0d0
+            tStep=1
+            call moments(State,n_max,mean,meansq)
+            sum_of_meansq(tStep)=sum_of_meansq(tStep)+meansq
+            sum_of_means(tStep)=sum_of_means(tStep)+mean
+            call findNorm(State,n_max,sum_coef)
+            normForThisM=normForThisM+sum_coef
+            norm(tStep)=norm(tStep)+sum_coef
+            if (writeWavefunction) then
+                call accumulate_density(State,n_max,density,numTimeSteps,AtomRange+INT(TotalAtomNumber)+1,INT(n_zero_min),tStep)
+            endif
+            time(tStep)=t
+            tStep=tStep+1
+            do interval=1,ndiv
+                q=Eqz+Emw(interval)
+                call setup_ScaledH(q,C(interval),AtomN,m,n_max,Emin,Emax)
+                dt=Deltat(interval)/dfloat(ntstep(interval)) ! TimeStep
+                Scaled_dt=TwoPi*(Emax-Emin)*dt*0.5d0 ! TimeStep in current
+                tlocalScaled=0d0    ! local time evolution in scaled time
+                do it=1,ntstep(interval)
+                    t=t+dt           ! total time evolution in seconds
+                    tlocalScaled=tlocalScaled+Scaled_dt ! scaled time
+                    call ChebyshevPropagator(Scaled_dt,State,n_max)
+                    call moments(State,n_max,mean,meansq)
+                    sum_of_meansq(tStep)=sum_of_meansq(tStep)+meansq
+                    sum_of_means(tStep)=sum_of_means(tStep)+mean
+                    call findNorm(State,n_max,sum_coef)
+                    norm(tStep)=norm(tStep)+sum_coef
+                    if (writeWavefunction) then
+                        call accumulate_density(State,n_max,density,numTimeSteps,AtomRange+INT(TotalAtomNumber)+1,INT(n_zero_min),tStep)
+                    endif
+                    time(tStep)=t
+                    tStep=tStep+1
+                enddo               ! time steps within interval
+            enddo                  ! loop over intervals
+            deallocate(State)
+        endif ! AtomN > m?
+    enddo ! AtomN loop
+enddo ! m loop
+write(6,*) '#'
+write(6,*) '#    t(s)      mean        stddev'
+open(79,file='moments.dat')
+write(79,*) '#    t(s)      mean        mean-square'
+do tStep=1,numTimeSteps
+    t=time(tStep)
+    mean=sum_of_means(tStep)/norm(tStep)
+    meansq=sum_of_meansq(tStep)/norm(tStep)
+    write(6,*) t,mean,sqrt(meansq-mean*mean),norm(tStep)
+    write(79,*) t,mean,meansq
+enddo
+close(79)
+if (writeWavefunction) then
+    open(77,file=wavefunctionName)
+    write(77,*) "# t,N0,Probability"
+    call write_accumulated_density(77,density,numTimeSteps,INT(TotalAtomNumber)+AtomRange+1,time)
+    close(77)
+endif
+deallocate(sum_of_meansq)
+deallocate(sum_of_means)
+deallocate(norm)
+end program quantumspinor
+integer function find_nmax(TotalAtomNumber,Magnetization)
+implicit none
+integer :: TotalAtomNumber,Magnetization,Firstn0element
+Firstn0element=mod(TotalAtomNumber-abs(Magnetization),2) ! first n0 element
+!write(6,*) 'first n0 in Hamiltonian', Firstn0element
+find_nmax=(TotalAtomNumber-abs(Magnetization)-Firstn0element)/21
+return
+end function find_nmax
+integer function fact(n)
+integer :: n
+integer :: output
+real*8 :: r
+select case (n)
+case (0)
+output = 1
+case (1)
+output = 1
+case (2)
+output = 2
+case (3)
+output = 6
+case (4)
+output = 24
+case (5)
+output = 120
+case (6)
+output = 720
+case (7)
+output = 5040
+case (8)
+output = 40320
+case (9)
+output = 362880
+case DEFAULT
+r=dble(n)
+output = int(EXP(r*Log(r)-r+0.5d0*Log(8*ATAN(1.0d0)*r)))
+end select
+fact = output
+return
+end function fact
+subroutine findNorm(Wave,nmaxlocal,output)
+integer, intent(IN) :: nmaxlocal
+complex*16, dimension(nmaxlocal), intent(IN) :: Wave
+real*8, intent(OUT) :: output
+integer :: j
+output=0d0
+! determine norm
+do j=1,nmaxlocal
+    output=output+dreal(Wave(j))**2+dimag(Wave(j))**2
+enddo
+end subroutine findNorm
+subroutine accumulate_density(Wave,nmaxlocal,density,numTimeSteps,num_N0_Values,n_zero_min,tStep)
+implicit none
+integer, intent(IN) :: nmaxlocal,numTimeSteps,tStep, n_zero_min, num_N0_Values
+complex*16, dimension(nmaxlocal), intent(IN) :: Wave
+real*8, dimension(numTimeSteps*num_N0_Values), intent(OUT) :: density
+integer :: j,n0,index
+n0 = n_zero_min
+do j=1,nmaxlocal
+    index=(tStep-1)*num_N0_Values+n0+1
+    density(index)=density(index)+dreal(Wave(j))**2+dimag(Wave(j))**2
+    n0=n0+2
+enddo
+end subroutine accumulate_density
+subroutine write_accumulated_density(iunit,density,numTimeSteps,num_N0_Values,time)
+implicit none
+integer, intent(IN) :: iunit, numTimeSteps, num_N0_Values
+real*8, dimension(numTimeSteps*num_N0_Values), intent(IN) :: density
+real*8, dimension(numTimeSteps), intent(IN) :: time
+integer :: i,k
+do i=1,numTimesteps
+    do k=1,num_N0_Values
+        write(iunit,*) time(i), k-1, density((i-1)*num_N0_Values+k)
+    enddo
+    write(iunit,*) ""
+enddo
+end subroutine write_accumulated_density
