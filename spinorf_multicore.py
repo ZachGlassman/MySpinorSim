@@ -128,10 +128,10 @@ def main():
     propogate = 'Chebychev'
     species = 'Na'
     b_field = 0.0           #BField
-    n_tot = 4000            #TotalAtomNumber
+    n_tot = 40000            #TotalAtomNumber
     mag = -4                #Magnetization
     mag_range = 4       #MagRange
-    atom_range = 8      #AtomRange
+    atom_range = 15      #AtomRange
     spinor_phase = 0.0      #SpinorPhase
     n_0 = 3996              #N_0 numbers tarting in m=0
     c_init = 24             #C_init in Hz
