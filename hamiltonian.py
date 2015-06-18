@@ -7,11 +7,9 @@ import numpy as np
 from numba import jit, autojit
 
 @autojit
-def setup_scaled_H(q, c, total_atom_number, magnetization, nmaxfinal):
+def setup_scaled_H(q, c, n, m, nmaxfinal):
     """function to setup tridigonal Hamiltonian if first, return d,e"""
-    n = total_atom_number
-    m = magnetization
-    
+    first_n0 = np.mod(n-abs(m),2)
     n0 = np.mod((n-abs(m)),2)
     nmax = (n-abs(m)-n0)/2 + 1
  
@@ -54,7 +52,7 @@ def setup_scaled_H(q, c, total_atom_number, magnetization, nmaxfinal):
     radius = 2/(e_max-e_min)
     d = np.multiply(radius,d)
     e = np.multiply(radius,e)
-    return e_min, e_max ,d ,e
+    return e_min, e_max ,d ,e, first_n0
  
 @autojit
 def hamiltonian_c(n_max, in_w, e, d):

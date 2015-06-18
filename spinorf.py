@@ -4,12 +4,12 @@ Created on Fri Jun  5 14:24:21 2015
 This is the python version of spinorf so I can understand whats going on
 @author: zag
 """
-import cmath
+import time as timemod
 import numpy as np
 import math
 from hamiltonian import setup_scaled_H, moments
 from ChebyshevPropagator import chebyshev_propagator
-from numba import jit, autojit
+from numba import autojit
 #first we have initization variables
 
 def find_nmax(tot,m):
@@ -38,15 +38,15 @@ def find_norm(z):
         k = k + abs(i)**2
     return k
     
+start = timemod.time()    
 init_state_solver = 'coherent_state'
 propogate = 'Chebychev'
 species = 'Na'
 b_field = 0.0           #BField
 n_tot = 400            #TotalAtomNumber
 mag = -4                #Magnetization
-mag_range = 2         #MagRange
-#atom_range = 80        #AtomRange
-atom_range = 2
+mag_range = 7        #MagRange
+atom_range = 55       #AtomRange
 spinor_phase = 0.0      #SpinorPhase
 n_0 = 396              #N_0 numbers tarting in m=0
 c_init = 24             #C_init in Hz
@@ -64,8 +64,8 @@ sum_of_meansq = np.zeros(sum(n_step)+1)
 norm = np.zeros(sum(n_step)+1)
 time = np.zeros(sum(n_step)+1)
 
-first_n0 = np.mod(n_tot-abs(mag),2)
-density = np.zeros(sum(n_step) * int(n_tot)+atom_range+1)
+
+#density = np.zeros(sum(n_step) * int(n_tot)+atom_range+1)
 
 if n_0 < 1e-20:
     alpha_zero =  np.complex(0,0)
@@ -85,17 +85,15 @@ else:
 #calculate normalization factor
 norm_factor = (abs(alpha_minus)**2 + abs(alpha_zero)**2 + abs(alpha_plus)**2)/2
 
-file = open('testing_out.txt','w')
 #now loop over magnetizations to initialize
 steps_to_count = 0
 for m in range(mag-mag_range,mag+mag_range+1):
-    print('step {0} out of {1}'.format(steps_to_count,2*mag_range))
     norm_for_m = 0
     for atom_n in range(n_tot - atom_range, n_tot + atom_range +1):
         if atom_n >= abs(m):
             n_max = find_nmax(atom_n,m)
-            #call setup_scaled_h with first = True to get d,e
-            e_min,e_max,d,e = setup_scaled_H(eqz + emw[0],c[0],atom_n,m,n_max)
+            
+            e_min,e_max,d,e,first_n0 = setup_scaled_H(eqz + emw[0],c[0],atom_n,m,n_max)
             
             state = np.zeros(n_max, dtype = complex)
             sum_coef = 0
@@ -135,7 +133,7 @@ for m in range(mag-mag_range,mag+mag_range+1):
             t_step = t_step + 1
             for interval in range(ndiv):
                 q = eqz + emw[interval]
-                e_min,e_max,d,e =setup_scaled_H(q,c[interval], atom_n, m,n_max)
+                e_min,e_max,d,e, first_n0 =setup_scaled_H(q,c[interval], atom_n, m,n_max)
                 dt = delta_t[interval]/(n_step[interval]) #time step
                 scaled_dt = 2*np.pi * (e_max - e_min)*dt/2
                 t_local_scaled = 0
@@ -145,12 +143,12 @@ for m in range(mag-mag_range,mag+mag_range+1):
                     t_local_scaled += scaled_dt
                     
                     #debugging
-                    file.write('before {0} {1} {2} {3} {4}\n'.format(i,q,atom_n,m,n_max))
+                    #file.write('before {0} {1} {2} {3} {4}\n'.format(i,q,atom_n,m,n_max))
                   
-                    state = chebyshev_propagator(scaled_dt,state,n_max,e,d,file)
+                    state = chebyshev_propagator(scaled_dt,state,n_max,e,d)
                     
-                    file.write('####\n')
-                    mean, mean_sq = moments(state,n_max)
+                    #file.write('####\n')
+                    mean, mean_sq = moments(state,first_n0)
                     sum_of_meansq[t_step] += mean_sq
                     sum_of_means[t_step] += mean
                     sum_coef = find_norm(state)
@@ -159,10 +157,11 @@ for m in range(mag-mag_range,mag+mag_range+1):
                     time[t_step] = t
                     t_step += 1
     steps_to_count +=1
+    print('step {0} out of {1}'.format(steps_to_count,2*mag_range))
 
-file.close()
-outstring1 = '{:<15}{:<15}{:<15}\n'
-outstring = '{:<15.6e}{:<15.6e}{:<15.6e}\n'
+
+outstring1 = '{:<15}{:<15}{:<15}{:<15}\n'
+outstring = '{:<15.6e}{:<15.6e}{:<15.6e}{:<15.6e}\n'
 infostring = '{:<20} = {:<15}\n'
 with open('results.txt', 'w') as fp:
     #write out parameters
@@ -190,11 +189,14 @@ with open('results.txt', 'w') as fp:
                                                   c[i],
                                                   n_step[i]))
     fp.write('\n')
-    fp.write(outstring1.format('t(s)','mean','stddev'))
+    fp.write(outstring1.format('t(s)','mean','stddev','norm'))
 
     for time_step in range(len(sum_of_means)):
         t = time[time_step]
         mean = sum_of_means[time_step]/norm[time_step]
         meansq = sum_of_meansq[time_step]/norm[time_step]
-        fp.write(outstring.format(t,np.sqrt(meansq-mean*mean),norm[time_step]))
-            
+        fp.write(outstring.format(t,mean,np.sqrt(meansq-mean*mean),norm[time_step]))
+end = timemod.time()            
+print('Calculation Complete')
+print('Norm recovered', np.average(norm))
+print('Time for Calculation:', end-start)
