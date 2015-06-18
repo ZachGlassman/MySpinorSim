@@ -34,7 +34,7 @@ def low_filter(vec):
 
 
 def chebyshev_propagator(time_step, psi, n_tot, e, d,file):
-    """propogate function"""
+    """propogate function with Chebyshev Propgation"""
     epsilon = 1e-15
     #estimate upper bound with asymptotic form
     chebyshev_order = int(time_step) + 5
