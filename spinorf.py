@@ -9,6 +9,7 @@ import numpy as np
 import math
 from hamiltonian import setup_scaled_H, moments
 from ChebyshevPropagator import chebyshev_propagator
+from numba import jit, autojit
 #first we have initization variables
 
 def find_nmax(tot,m):
@@ -28,12 +29,14 @@ def alpha_help(a,n):
     else:
         ln = n * np.log(a) - np.log(math.factorial(int(n)))/2
     return ln
-    
+ 
+@autojit   
 def find_norm(z):
     """find complex norm^2 of a vector of complex numbers"""
-    
-    return sum([abs(i)**2 for i in z])
-    
+    k = 0
+    for i in z:
+        k = k + abs(i)**2
+    return k
     
 init_state_solver = 'coherent_state'
 propogate = 'Chebychev'
@@ -132,17 +135,21 @@ for m in range(mag-mag_range,mag+mag_range+1):
             t_step = t_step + 1
             for interval in range(ndiv):
                 q = eqz + emw[interval]
-                e_min,e_max,d,e=setup_scaled_H(q,c[interval], atom_n, m,n_max)
+                e_min,e_max,d,e =setup_scaled_H(q,c[interval], atom_n, m,n_max)
                 dt = delta_t[interval]/(n_step[interval]) #time step
                 scaled_dt = 2*np.pi * (e_max - e_min)*dt/2
                 t_local_scaled = 0
+                
                 for i in range(n_step[interval]):
                     t = t + dt
                     t_local_scaled += scaled_dt
-                    for i in range(len(state)):
-                        file.write('{0}\n'.format(state[i]))
+                    
+                    #debugging
+                    file.write('before {0} {1} {2} {3} {4}\n'.format(i,q,atom_n,m,n_max))
+                  
+                    state = chebyshev_propagator(scaled_dt,state,n_max,e,d,file)
+                    
                     file.write('####\n')
-                    state = chebyshev_propagator(scaled_dt,state,n_max,e,d)
                     mean, mean_sq = moments(state,n_max)
                     sum_of_meansq[t_step] += mean_sq
                     sum_of_means[t_step] += mean
@@ -184,6 +191,7 @@ with open('results.txt', 'w') as fp:
                                                   n_step[i]))
     fp.write('\n')
     fp.write(outstring1.format('t(s)','mean','stddev'))
+
     for time_step in range(len(sum_of_means)):
         t = time[time_step]
         mean = sum_of_means[time_step]/norm[time_step]
