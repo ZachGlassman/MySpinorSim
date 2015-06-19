@@ -31,13 +31,14 @@ def alpha_help(a,n):
         ln = n * np.log(a) - np.log(math.factorial(int(n)))/2
     return ln
  
-@autojit   
+@autojit
 def find_norm(z):
     """find complex norm^2 of a vector of complex numbers"""
     k = 0
     for i in z:
         k = k + abs(i)**2
     return k
+
 
 def calc_m_loop(queue,m,params):
     """calculate for specific magnetization"""
@@ -50,7 +51,7 @@ def calc_m_loop(queue,m,params):
     c = params['c']
     n_step = params['n_step']
     delta_t = params['delta_t']
-    ndiv = params['ndiv'] 
+    ndiv = params['ndiv']
     alpha_minus = params['alpha_minus']
     alpha_plus = params['alpha_plus']
     alpha_zero = params['alpha_zero']
@@ -110,7 +111,7 @@ def calc_m_loop(queue,m,params):
                 t_local_scaled = 0
                 for i in range(n_step[interval]):
                     t = t + dt
-                    t_local_scaled += scaled_dt                 
+                    t_local_scaled += scaled_dt
                     state = chebyshev_propagator(scaled_dt,state,n_max,e,d)
                     mean, mean_sq = moments(state,first_n0)
                     sum_of_meansq[t_step] += mean_sq
@@ -120,20 +121,20 @@ def calc_m_loop(queue,m,params):
                     norm[t_step] += sum_coef
                     time[t_step] = t
                     t_step += 1
-    queue.put([time, sum_of_means, sum_of_meansq, norm])               
-    #return index,time, sum_of_means, sum_of_meansq, norm  
+    queue.put([time, sum_of_means, sum_of_meansq, norm])
+    #return index,time, sum_of_means, sum_of_meansq, norm
 
-def main():       
+def main():
     init_state_solver = 'coherent_state'
     propogate = 'Chebychev'
     species = 'Na'
     b_field = 0.0           #BField
-    n_tot = 40000            #TotalAtomNumber
-    mag = -4                #Magnetization
+    n_tot = 4000            #TotalAtomNumber
+    mag = 0               #Magnetization
     mag_range = 4       #MagRange
-    atom_range = 15      #AtomRange
+    atom_range = 10      #AtomRange
     spinor_phase = 0.0      #SpinorPhase
-    n_0 = 3996              #N_0 numbers tarting in m=0
+    n_0 = n_tot - 4              #N_0 numbers tarting in m=0
     c_init = 24             #C_init in Hz
     
     
@@ -172,10 +173,10 @@ def main():
     #calculate normalization factor
     norm_factor = (abs(alpha_minus)**2 + abs(alpha_zero)**2 + abs(alpha_plus)**2)/2
 
-    params = {        
-    'n_tot' :n_tot  ,                 
-    'atom_range' :atom_range,             
-    'n_0':n_0,              
+    params = {
+    'n_tot' :n_tot  ,
+    'atom_range' :atom_range,
+    'n_0':n_0,
     'eqz' : eqz,
     'ndiv':ndiv,
     'delta_t':delta_t,
@@ -189,12 +190,12 @@ def main():
     }
     #set up multiprocessing
     queue = Queue()
-    procs = {}          
+    procs = {}
     #now loop over and send to difference processors
     for m in range(mag-mag_range,mag+mag_range+1):
         k = m - (mag-mag_range)
         procs[k] = Process(target = calc_m_loop, args = (queue, m, params))
-        procs[k].start() 
+        procs[k].start()
        
     
     #get the results
@@ -247,13 +248,13 @@ def main():
             t = time[time_step]
             mean = sum_of_means[time_step]/norm[time_step]
             meansq = sum_of_meansq[time_step]/norm[time_step]
-            fp.write(outstring.format(t,mean,np.sqrt(meansq-mean*mean),norm[time_step]))           
+            fp.write(outstring.format(t,mean,np.sqrt(meansq-mean*mean),norm[time_step]))
     print('Calculation Complete')
     print('Norm recovered', np.average(norm))
     
 
 if __name__=='__main__':
-    start = timemod.time() 
+    start = timemod.time()
     main()
     end = timemod.time()
     print('Time for Calculation:', end-start)

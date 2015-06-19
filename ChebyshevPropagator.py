@@ -16,13 +16,10 @@ def dbesj(x, alpha, n):
     """sequence of bessel functions where n is the number of elements of a
     bessel function of J_(alpha + k -1)(x) where k = 1...n
     """
-    bessel_j = np.zeros(n+1)
-    i = 0
-    for k in range(1,n+1):
-        bessel_j[i] = jv(alpha + k -1, x)
-        i = i + 1
+    k = np.arange(0,n+1,1) + alpha
+    bessel_j = jv(k,x)
     y = len([num for num in bessel_j if abs(num) < 1e-20])
-    return bessel_j, y
+    return bessel_j,y
  
 @autojit
 def chebyshev_propagator(time_step, psi, n_tot, e, d):
