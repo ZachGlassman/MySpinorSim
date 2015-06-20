@@ -10,11 +10,23 @@ import math
 from hamiltonian import setup_scaled_H, moments
 from ChebyshevPropagator import chebyshev_propagator
 from numba import autojit
+import sys
 #first we have initization variables
 
 def find_nmax(tot,m):
     first = np.mod(tot - abs(m),2)
     return (tot-abs(m)-first)/2+1
+
+def write_progress(steps_to_count):
+    #write out fancy
+    perc_done = steps_to_count/(2*mag_range+1) * 100
+    #50 character string always
+    num_marks = int(.5 * perc_done)
+    out = ''.join('#' for i in range(num_marks))
+    out = out + ''.join(' ' for i in range(50 - num_marks))
+    sys.stdout.write('\r[{0}]{1:>2.0f}%'.format(out,perc_done))
+    sys.stdout.flush()
+    
     
 def alpha_help(a,n):
     """helper function, here a is alpha_ and n is n_"""
@@ -30,7 +42,7 @@ def alpha_help(a,n):
         ln = n * np.log(a) - np.log(math.factorial(int(n)))/2
     return ln
  
-@autojit   
+@autojit
 def find_norm(z):
     """find complex norm^2 of a vector of complex numbers"""
     k = 0
@@ -38,18 +50,19 @@ def find_norm(z):
         k = k + abs(i)**2
     return k
     
-start = timemod.time()    
+start = timemod.time()
 init_state_solver = 'coherent_state'
 propogate = 'Chebychev'
 species = 'Na'
 b_field = 0.0           #BField
-n_tot = 400            #TotalAtomNumber
-mag = -4                #Magnetization
+n_tot = 4000            #TotalAtomNumber
+mag = 0               #Magnetization
 mag_range = 7        #MagRange
-atom_range = 55       #AtomRange
+atom_range = 75       #AtomRange
 spinor_phase = 0.0      #SpinorPhase
-n_0 = 396              #N_0 numbers tarting in m=0
+n_0 = 3996              #N_0 numbers tarting in m=0
 c_init = 24             #C_init in Hz
+filename = 'results.txt'
 
 eqz = 0.007189 * b_field**2
 ndiv = 3
@@ -85,8 +98,10 @@ else:
 #calculate normalization factor
 norm_factor = (abs(alpha_minus)**2 + abs(alpha_zero)**2 + abs(alpha_plus)**2)/2
 
+
 #now loop over magnetizations to initialize
 steps_to_count = 0
+write_progress(steps_to_count)
 for m in range(mag-mag_range,mag+mag_range+1):
     norm_for_m = 0
     for atom_n in range(n_tot - atom_range, n_tot + atom_range +1):
@@ -156,14 +171,15 @@ for m in range(mag-mag_range,mag+mag_range+1):
                     norm[t_step] += sum_coef
                     time[t_step] = t
                     t_step += 1
+    
     steps_to_count +=1
-    print('step {0} out of {1}'.format(steps_to_count,2*mag_range))
+    write_progress(steps_to_count)
 
 
 outstring1 = '{:<15}{:<15}{:<15}{:<15}\n'
 outstring = '{:<15.6e}{:<15.6e}{:<15.6e}{:<15.6e}\n'
 infostring = '{:<20} = {:<15}\n'
-with open('results.txt', 'w') as fp:
+with open(filename, 'w') as fp:
     #write out parameters
     fp.write(infostring.format('Species','23Na'))
     fp.write(infostring.format('B Field (muT)',b_field))
@@ -196,7 +212,9 @@ with open('results.txt', 'w') as fp:
         mean = sum_of_means[time_step]/norm[time_step]
         meansq = sum_of_meansq[time_step]/norm[time_step]
         fp.write(outstring.format(t,mean,np.sqrt(meansq-mean*mean),norm[time_step]))
-end = timemod.time()            
+end = timemod.time()
+sys.stdout.write('\n')
+sys.stdout.flush()
 print('Calculation Complete')
 print('Norm recovered', np.average(norm))
 print('Time for Calculation:', end-start)

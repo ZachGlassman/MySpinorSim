@@ -15,11 +15,12 @@ from numba import autojit
 def dbesj(x, alpha, n):
     """sequence of bessel functions where n is the number of elements of a
     bessel function of J_(alpha + k -1)(x) where k = 1...n
+    Don't return a y value since we don't use it, will improve performance
     """
     k = np.arange(0,n+1,1) + alpha
     bessel_j = jv(k,x)
-    y = len([num for num in bessel_j if abs(num) < 1e-20])
-    return bessel_j,y
+    #y = len([num for num in bessel_j if abs(num) < 1e-20])
+    return bessel_j
  
 @autojit
 def chebyshev_propagator(time_step, psi, n_tot, e, d):
@@ -34,7 +35,7 @@ def chebyshev_propagator(time_step, psi, n_tot, e, d):
         X = (Y/chebyshev_order)**chebyshev_order / np.sqrt(2*np.pi*chebyshev_order)
     
     #now compute the Bessel function
-    bessel_j, nz = dbesj(time_step,0,chebyshev_order+1)
+    bessel_j = dbesj(time_step,0,chebyshev_order+1)
     #get the order of the polynomial, find index of first element less than epsilon
     for i in range(chebyshev_order-1,0,-1):
         if bessel_j[i] >= epsilon:
