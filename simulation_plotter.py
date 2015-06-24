@@ -7,8 +7,8 @@ Plotter
 import numpy as np
 import matplotlib.pyplot as plt
 
-#filename = 'results.txt'
-filename = 'results_multi.txt'
+filename = 'results.txt'
+#filename = 'results_multi.txt'
 
 with open(filename,'r') as fp:
     data_in = fp.readlines()
