@@ -138,7 +138,7 @@ def main():
     c_init = 24             #C_init in Hz
     
     
-    eqz = 0.007189 * b_field**2
+    eqz = 0.02768 * b_field**2
     ndiv = 3
     delta_t= [0.04,0.001,0.04]
     c = [24,24,24]

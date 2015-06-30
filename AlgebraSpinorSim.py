@@ -6,6 +6,7 @@ Quantum package to evaluate symbolic raising and lowering operators
 """
 #from sympy import  sqrt
 import sympy
+import sympy.mpmath as mpmath
 import time
 from numpy import sqrt 
 import sys
@@ -15,7 +16,7 @@ class AngularKet(object):
     def __init__(self,L,M, coef = 1):
         self.L = L
         self.M = M
-        self.coef = coef
+        self.coef = mpmath.mpf(coef)
         
     def lowerM(self):
         if self.M <1:
@@ -44,7 +45,7 @@ class FockKet(object):
     """Fock ket"""
     def __init__(self,coef,Nm,N0,Np):
         self.state = {'Nm' : Nm,'N0' : N0,'Np':Np}
-        self.coef = coef
+        self.coef = mpmath.mpf(coef)
         
     def destroyN(self, p):
         if p not in self.state.keys():
@@ -65,7 +66,7 @@ class FockKet(object):
             return FockKet(c,**state)
             
     def pretty_print(self):
-        print('{0}|{1},{2},{3}>'.format(self.coef,self.state['Nm'],self.state['N0'],self.state['Np']))
+        print(self.__str__())
         
     def __str__(self):
         return '{0}|{1},{2},{3}>'.format(self.coef,self.state['Nm'],self.state['N0'],self.state['Np'])
@@ -125,6 +126,9 @@ class SuperState(object):
         self.kets = []
         for i in temp:
             self.raising_Operator(i)
+    
+    def get_max(self):
+        return max([abs(i.coef) for i in self.kets])
        
     def __str__(self):
         return ''.join(i.__str__() + '+' for i in self.kets)
@@ -133,7 +137,7 @@ class SuperState(object):
         print([i.__str__() for i in self.kets])
     
     def filter_low(self,epsilon):
-        temp = [i for i in self.kets if abs(sympy.N(i.coef)) > epsilon]
+        temp = [i for i in self.kets if abs(i.coef) > epsilon]
         self.kets = temp
         
 #fancy writeout
@@ -151,6 +155,8 @@ def write_progress(step,total):
 if __name__ == '__main__':
     #start with the stretched state and apply the L+ operator L times
     N = 40000
+
+   
     with open('StateOut.txt','w') as fp:
 
         fock = SuperState(FockKet(1,N,0,0)) 
@@ -158,17 +164,20 @@ if __name__ == '__main__':
         s = time.time()
         fp.write('{0} : {1}\n'.format(ang.__str__(),fock.__str__()))
         for i in range(N):  
-            write_progress(i,N)
+            write_progress(i+1,N)
             fock.raise_state()
             ang = ang.raiseM()
             fock.multiply(1/ang.coef)
             ang.coef = 1
+            #norm = fock.get_max()
+            #fock.multiply(1/norm)
+            norm = len([i.coef for i in fock.kets if abs(i.coef) > 1e-200])
             fock.filter_low(1e-200)
-            fp.write('{0} : {1}\n'.format(ang.__str__(),fock.__str__()))
-
+            fp.write('{2},{3} : {0} = {1}\n'.format(ang.__str__(),fock.__str__(),norm,len(fock.kets)))
             
         e = time.time()
     print('\n',e-s)
+   
     
     
     
