@@ -55,18 +55,18 @@ init_state_solver = 'coherent_state'
 propogate = 'Chebychev'
 species = 'Na'
 b_field = 0.0           #BField
-n_tot = 4000            #TotalAtomNumber
+n_tot = 400            #TotalAtomNumber
 mag = 0                 #Magnetization
-mag_range = 4           #MagRange
-atom_range = 25         #AtomRange
+mag_range = 7           #MagRange
+atom_range = 40         #AtomRange
 spinor_phase = 0.0      #SpinorPhase
-n_0 = 3996              #N_0 numbers tarting in m=0
+n_0 = n_tot-4             #N_0 numbers tarting in m=0
 c_init = 24             #C_init in Hz
 filename = 'results.txt'
 
 eqz = 0.02768 * b_field**2
 ndiv = 3
-delta_t= [0.04,0.001,0.04]
+delta_t= [0.01,0.001,0.01]
 c = [24,24,24]
 emw = [-2.5,-426,-2.5]
 n_step = [30,6,30]

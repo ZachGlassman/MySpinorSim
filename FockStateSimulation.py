@@ -13,7 +13,7 @@ import sys
 import time
 ##########################
 #Define Runge-Kutta method
-##########################   
+##########################
 def ynplus1(func, yn,t,dt,**kwargs):
     """evolve Runge kutta with function func which takes two input arguments
     yn and t and possibly extra arguments
@@ -55,7 +55,8 @@ def calculate_magnetic_field(total_time,dt,tauB):
     #now iterate in time
     for i in range(1,num_iter,1):
         Blist[i] = ynplus1(func,Blist[i-1],i*dt,dt)
-    return Blist  
+    return Blist
+    
 #######################################################################
 #FOCK STATE
 #Vector is k[i] where [n-1,n0,n1] = [k-m1,N-2k+ml,k], k in (0,(N+ml)/2)
@@ -90,7 +91,7 @@ def set_up_simulation(total_time,dt,tauB,mag_time,c,n_atoms):
     'c':c,
     'n_atoms':n_atoms,
     'bfield':b_field[0]
-    }    
+    }
     b_steps = int(mag_time/dt)
     return params, num_steps,b_steps,b_field
     
@@ -116,7 +117,7 @@ def write_progress(step,total):
     out = ''.join('#' for i in range(num_marks))
     out = out + ''.join(' ' for i in range(50 - num_marks))
     sys.stdout.write('\r[{0}]{1:>2.0f}%'.format(out,perc_done))
-    sys.stdout.flush()        
+    sys.stdout.flush()
 
 ################################################
 #Calculate Expectation Values
@@ -126,19 +127,45 @@ def calc_n0_vals(psi,num_atoms):
     n0 = 0
     n0sqr = 0
     for k in range(len(psi)):
-        n0 += (num_atoms-2*k) * abs(psi[k])**2 
+        n0 += (num_atoms-2*k) * abs(psi[k])**2
         n0sqr += (num_atoms-2*k)**2 * abs(psi[k])**2
     n0var = n0sqr - n0**2
     return n0, n0sqr,n0var
-  
-@autojit  
-def calc_fx_sqr(psi,num_atoms):
+
+@autojit
+def calc_sx_sqr(psi,n):
     ans = 0
+    #here i indexes k
     for i in range(len(psi)):
-        ans += 0.5*(2*i*(num_atoms-2*i+1)+2*(i+1)*(num_atoms-2*i))*abs(psi[i+1])**2
+        ans += ((n-2*i)*(i+1)+(n-2*i+1)*i)*np.abs(psi[i]*psi[i])
+    for i in range(len(psi)-1):
+        ans += i*np.sqrt((n-2*i+1)*(n-2*i+2))*np.abs(psi[i]*psi[i+1])
     for i in range(1,len(psi)):
-        ans += i *np.sqrt((num_atoms - 2 * (i+1)+3)*(num_atoms-2*(i+1)+4))+d
+        ans += (i+1)*np.sqrt((n-2*i)*(n-2*i-1))*np.abs(psi[i]*psi[i-1])
+    return ans
     
+@autojit
+def calc_qyz_sqr(psi,n):
+    ans = 0
+    #here i indexes k
+    for i in range(len(psi)):
+        temp = 48*(i**4-i**3*n)+24*i**3+12*i**2*n**2-36*i**2*n +30*i**2 + 12*i*n**2 - 20*i*n +6*i+4*n**2-4*n
+        ans += temp * np.abs(psi[i]*psi[i])
+    for i in range(len(psi)-1):
+        temp = (np.sqrt(-2*i+n)*np.sqrt(-2*i+n-1))*(-16*i**3+8*i**2*n-36*i**2+16*i*n-32*i+8*n-12)
+        ans += temp * np.abs(psi[i]*psi[i+1])
+    for i in range(1,len(psi)):
+        temp = 4*i*np.sqrt(-2*i+n+1)*np.sqrt(-2*i+n+2)*(-4*i**2+2*i*n+3*i-2)
+        ans += temp * np.abs(psi[i]*psi[i-1])
+    '''
+    for i in range(len(psi)-2):
+        temp = 2*np.sqrt(-2*i+n)*(i+1)*(i+2)*np.sqrt(-2*i+n-3)*np.sqrt(-2*i+n-2)*np.sqrt(-2*i+n-1)
+        ans += temp * np.abs(psi[i]*psi[i+2])
+    for i in range(2,len(psi)-1):
+        temp = 2*np.sqrt(-2*i+n)*(i+1)*(i+2)*np.sqrt(-2*i+n-3)*np.sqrt(-2*i+n-2)*np.sqrt(-2*i+n-1)
+        ans += temp * np.abs(psi[i]*psi[i-2])
+    '''
+    return ans
 ###############################################
 #main routine
 ###############################################
@@ -153,20 +180,33 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c):
     n0 = np.zeros(num_steps)
     n0sqr = np.zeros(num_steps)
     n0var = np.zeros(num_steps)
+    sxsqr = np.zeros(num_steps)
+    qyzsqr = np.zeros(num_steps)
     bf = 0.02768 * 21**2 * 6
     #now evolve in time
     write_progress(0,num_steps)
     for i in range(num_steps):
         n0[i],n0sqr[i],n0var[i]=calc_n0_vals(psi,n_atoms)
-        params['bfield'] = bf #get_bfield(b_field,b_steps,i)
+        sxsqr[i] = calc_sx_sqr(psi,n_atoms)
+        qyzsqr[i] = calc_qyz_sqr(psi,n_atoms)
+        params['bfield'] = bf
         psi = ynplus1(func_to_integrate,psi,i*dt,dt,**params)
         write_progress(i + 1,num_steps)
             
     #with open('Fockout.txt', 'w') as f:
     step_size = 5 #don't plot all data
     time = np.asarray([i * dt for i in range(0,num_steps,step_size)] )
-    plt.errorbar(time,n0[::step_size]) #yerr = n0var)
-    plt.title('N0')
+    fig, ax = plt.subplots(3,1)
+    ax[0].errorbar(time,n0[::step_size]) #yerr = n0var)
+    ax[1].plot(time,sxsqr[::step_size],label = 's_x^2')
+    ax[2].plot(time,qyzsqr[::step_size], label = 'q_yz^2')
+    ax[1].set_title('ln<s_x^2>')
+    ax[2].set_title('ln<q_yz^2>')
+    ax[0].set_title('N_0')
+    ax[2].set_xlabel('t(s)')
+    ax[1].set_yscale('log')
+    ax[2].set_yscale('log')
+    plt.tight_layout()
     plt.show()
         
            
@@ -177,14 +217,14 @@ if __name__ == '__main__':
     simulation_params = {
     'total_time': .3, #simulated time (s),
     'mag_time':0.015,
-    'dt':0.001e-3, #simulation time step,
+    #'dt':0.001e-3, #simulation time step,
+    'dt':0.001e-2,
     'tauB' : 1e-3,
-    'c':24,
-    'n_atoms':40000,
+    'c':-24,
+    'n_atoms':5000,
     }
     s = time.time()
     main(**simulation_params)
     e = time.time()
     print('\n')
     print('Simulation time: {:5.2f}'.format(e-s))
-   
