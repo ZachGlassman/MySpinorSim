@@ -156,7 +156,7 @@ def calc_qyz_sqr(psi,n):
         ans += -(i+1)*np.sqrt((n-2*i)*(n-2*i-1))*np.abs(psi[i]*psi[i-1])
     return ans
 ###############################################
-#main routine
+# main routine
 ###############################################
 def main(total_time,dt,mag_time,tauB,n_atoms,c):
     params,num_steps,b_steps,b_field = set_up_simulation(total_time,
@@ -169,7 +169,7 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c):
     n0var = np.zeros(num_steps)
     sxsqr = np.zeros(num_steps)
     qyzsqr = np.zeros(num_steps)
-    bf = 0.02768 * 21**2 * 2*np.pi
+    bf = 0.02768 * .37**2 * 2*np.pi
     #now evolve in time
     write_progress(0,num_steps)
     for i in range(num_steps):
@@ -198,17 +198,17 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c):
         
            
 #############################################
-#Simulation setup
+# Simulation setup and program execution
 #############################################
 if __name__ == '__main__':
     simulation_params = {
-    'total_time': .05, #simulated time (s),
+    'total_time': .5, #simulated time (s),
     'mag_time':0.015,
     #'dt':0.001e-3, #simulation time step,
     'dt':0.001e-2,
     'tauB' : 1e-3,
     'c':36*2*np.pi,
-    'n_atoms':1000,
+    'n_atoms':3000,
     }
     s = time.time()
     main(**simulation_params)
