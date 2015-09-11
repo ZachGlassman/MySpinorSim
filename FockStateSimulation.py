@@ -130,14 +130,14 @@ def calc_n0_vals(psi,num_atoms):
         n0 += (num_atoms-2*k) * abs(psi[k])**2
         n0sqr += (num_atoms-2*k)**2 * abs(psi[k])**2
     n0var = n0sqr - n0**2
-    return n0, n0sqr,n0var
+    return n0, n0sqr , n0var
 
 @autojit
 def calc_sx_sqr(psi,n):
     ans = 0
-    #here i indexes k
+    #where i indexes k
     for i in range(len(psi)):
-        ans += ((n-2*i)*(i+1)+(n-2*i+1)*i)*np.abs(psi[i]*psi[i])
+        ans += (-4*i*i+2*i*n-i+n)*np.abs(psi[i]*psi[i])
     for i in range(len(psi)-1):
         ans += i*np.sqrt((n-2*i+1)*(n-2*i+2))*np.abs(psi[i]*psi[i+1])
     for i in range(1,len(psi)):
@@ -149,22 +149,11 @@ def calc_qyz_sqr(psi,n):
     ans = 0
     #here i indexes k
     for i in range(len(psi)):
-        temp = 48*(i**4-i**3*n)+24*i**3+12*i**2*n**2-36*i**2*n +30*i**2 + 12*i*n**2 - 20*i*n +6*i+4*n**2-4*n
-        ans += temp * np.abs(psi[i]*psi[i])
+        ans += (-4*i*i+2*i*n-i+n)*np.abs(psi[i]*psi[i])
     for i in range(len(psi)-1):
-        temp = (np.sqrt(-2*i+n)*np.sqrt(-2*i+n-1))*(-16*i**3+8*i**2*n-36*i**2+16*i*n-32*i+8*n-12)
-        ans += temp * np.abs(psi[i]*psi[i+1])
+        ans += -i*np.sqrt((n-2*i+1)*(n-2*i+2))*np.abs(psi[i]*psi[i+1])
     for i in range(1,len(psi)):
-        temp = 4*i*np.sqrt(-2*i+n+1)*np.sqrt(-2*i+n+2)*(-4*i**2+2*i*n+3*i-2)
-        ans += temp * np.abs(psi[i]*psi[i-1])
-    '''
-    for i in range(len(psi)-2):
-        temp = 2*np.sqrt(-2*i+n)*(i+1)*(i+2)*np.sqrt(-2*i+n-3)*np.sqrt(-2*i+n-2)*np.sqrt(-2*i+n-1)
-        ans += temp * np.abs(psi[i]*psi[i+2])
-    for i in range(2,len(psi)-1):
-        temp = 2*np.sqrt(-2*i+n)*(i+1)*(i+2)*np.sqrt(-2*i+n-3)*np.sqrt(-2*i+n-2)*np.sqrt(-2*i+n-1)
-        ans += temp * np.abs(psi[i]*psi[i-2])
-    '''
+        ans += -(i+1)*np.sqrt((n-2*i)*(n-2*i-1))*np.abs(psi[i]*psi[i-1])
     return ans
 ###############################################
 #main routine
@@ -174,15 +163,13 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c):
                                                 dt,tauB,mag_time,c,n_atoms)
                                                                              
     psi = create_init_state(n_atoms) # create initial state
-    #create output string
-    #outstr = ''.join('{:<25}' for i in range(len(psi))) + '\n'
-
+    
     n0 = np.zeros(num_steps)
     n0sqr = np.zeros(num_steps)
     n0var = np.zeros(num_steps)
     sxsqr = np.zeros(num_steps)
     qyzsqr = np.zeros(num_steps)
-    bf = 0.02768 * 21**2 * 6
+    bf = 0.02768 * 21**2 * 2*np.pi
     #now evolve in time
     write_progress(0,num_steps)
     for i in range(num_steps):
@@ -193,17 +180,17 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c):
         psi = ynplus1(func_to_integrate,psi,i*dt,dt,**params)
         write_progress(i + 1,num_steps)
             
-    #with open('Fockout.txt', 'w') as f:
     step_size = 5 #don't plot all data
     time = np.asarray([i * dt for i in range(0,num_steps,step_size)] )
     fig, ax = plt.subplots(3,1)
-    ax[0].errorbar(time,n0[::step_size]) #yerr = n0var)
-    ax[1].plot(time,sxsqr[::step_size],label = 's_x^2')
-    ax[2].plot(time,qyzsqr[::step_size], label = 'q_yz^2')
-    ax[1].set_title('ln<s_x^2>')
-    ax[2].set_title('ln<q_yz^2>')
-    ax[0].set_title('N_0')
-    ax[2].set_xlabel('t(s)')
+    ax[0].fill_between(time,n0[::step_size]-np.sqrt(n0var[::step_size]),
+        n0[::step_size]-np.sqrt(n0var[::step_size]),facecolor='green',alpha=0.5)
+    ax[1].plot(time,sxsqr[::step_size],label = r'$S_x^2$')
+    ax[2].plot(time,qyzsqr[::step_size], label = r'$Q_{yz}^2$')
+    ax[1].set_title(r'$\ln\langle S_x^2\rangle$')
+    ax[2].set_title(r'$\ln\langle Q_{yz}^2\rangle$')
+    ax[0].set_title(r'$N_0$')
+    ax[2].set_xlabel('$t(s)$')
     ax[1].set_yscale('log')
     ax[2].set_yscale('log')
     plt.tight_layout()
@@ -215,13 +202,13 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c):
 #############################################
 if __name__ == '__main__':
     simulation_params = {
-    'total_time': .3, #simulated time (s),
+    'total_time': .05, #simulated time (s),
     'mag_time':0.015,
     #'dt':0.001e-3, #simulation time step,
     'dt':0.001e-2,
     'tauB' : 1e-3,
-    'c':-24,
-    'n_atoms':5000,
+    'c':36*2*np.pi,
+    'n_atoms':1000,
     }
     s = time.time()
     main(**simulation_params)

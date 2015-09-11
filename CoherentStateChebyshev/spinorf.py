@@ -61,13 +61,13 @@ mag_range = 7           #MagRange
 atom_range = 40         #AtomRange
 spinor_phase = 0.0      #SpinorPhase
 n_0 = n_tot-4             #N_0 numbers tarting in m=0
-c_init = 24             #C_init in Hz
+c_init = 36             #C_init in Hz
 filename = 'results.txt'
 
 eqz = 0.02768 * b_field**2
 ndiv = 3
 delta_t= [0.01,0.001,0.01]
-c = [24,24,24]
+c = [36,36,36]
 emw = [-2.5,-426,-2.5]
 n_step = [30,6,30]
 
