@@ -62,7 +62,7 @@ def generate_states(N):
     nyz = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = int(np.sqrt(N)))
     nxz = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = int(np.sqrt(N)))
     txipi = -(sy + nyz)/(sx + nxz)
-    tximi = (sy-nyz)/(sx-nyz)
+    tximi = (sy-nyz)/(sx-nxz)
     def pos(x):
         if x < 0:
             return x + np.pi
@@ -72,14 +72,16 @@ def generate_states(N):
     txim = np.asarray([pos(i) for i in tximi])
     
    
-    a = (sx+nxz)**2/np.cos(np.arctan(txip))
-    b = (sx-nxz)**2/np.cos(np.arctan(txim))
+    a = (sx+nxz)**2/(np.cos(np.arctan(txip)))**2
+    b = (sx-nxz)**2/(np.cos(np.arctan(txim)))**2
    
 
     rho_0 = 1/2 + scimath.sqrt(1/4-1/8*(a+b))
     m = 1/(8 * rho_0)*(a-b)
-    states = np.zeros((int(np.sqrt(N)),3),dtype = complex)
 
+            
+    states = np.zeros((len(m),3),dtype = complex)
+    
     states[:,0] = scimath.sqrt((1-rho_0+m)/2) * np.exp(np.arctan(txip)*1j)
     states[:,1] = scimath.sqrt(rho_0)
     states[:,2] = scimath.sqrt((1-rho_0-m)/2) * np.exp(np.arctan(txim)*1j)
