@@ -55,12 +55,12 @@ class Operator(object):
         return np.dot(np.conj(ele), np.dot(self.mat,ele.T)).real
         
         
-def generate_states(N):
+def generate_states(N,s):
     """generate quasi probability distribution from Chapman paper"""
-    sx = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = int(np.sqrt(N)))
-    sy = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = int(np.sqrt(N)))
-    nyz = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = int(np.sqrt(N)))
-    nxz = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = int(np.sqrt(N)))
+    sx = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = s)
+    sy = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size =s)
+    nyz = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = s)
+    nxz = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = s)
     txipi = -(sy + nyz)/(sx + nxz)
     tximi = (sy-nyz)/(sx-nxz)
     def pos(x):
@@ -154,24 +154,24 @@ if __name__ == '__main__':
     #first define arrays
     #define problem parameters
     pars = {}
-    pars['dt'] = 1e-5
-    tfinal = .5
+    pars['dt'] = .6e-4
+    tfinal = .3
 
     t = np.linspace(0, tfinal , int( tfinal/pars['dt'] ))
     pars['tfinal'] = t[-1] - pars['dt']
    
    
-    c = 2*np.pi*36
-    B =  0.37  #Gauss
+    c =2*np.pi*7.5 #2*np.pi*36
+    B = 0.21#0.37  #Gauss
     p1 = 0
     p0 = 0
     pm1 = 0
     qu1 = 0
     qu0 = 0
     qum1= 0
-    q1 = 2*np.pi * 0.02768
+    q1 = 2*np.pi * 72
     q0 = 0
-    qm1= 2*np.pi * 0.02768
+    qm1= 2*np.pi * 72
     
     
     #generate array
@@ -188,9 +188,9 @@ if __name__ == '__main__':
     pars['c_arr'] = validate(c,t)
     
     #now start calculation
-    N = 40000
+    N = 5000
     start = time.time()
-    states = generate_states(N)
+    states = generate_states(N,400)
     step_size = 50
     ans = np.zeros((len(states),3,len(t[::step_size])))
     
@@ -205,12 +205,8 @@ if __name__ == '__main__':
     #plot it
     fig, ax = plt.subplots(3,1)
     for i in range(3):
-        if i == 0:
-            mult = N
-        else:
-            mult = 1
-        m = np.mean(mult*ans[:,i],axis = 0)
-        s = np.std(mult*ans[:,i],axis = 0)
+        m = np.mean(ans[:,i],axis = 0)
+        s = np.std(ans[:,i],axis = 0)
         ax[i].plot(t[::step_size],m)
         ax[i].fill_between(t[::step_size,],m-s,m+s,facecolor='green',alpha=0.2)
     plt.tight_layout()
