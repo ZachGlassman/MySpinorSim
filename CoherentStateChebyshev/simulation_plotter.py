@@ -21,7 +21,8 @@ for i,j in enumerate(data_in[ind+1:]):
     data[i] = np.asarray([float(i) for i in j.rstrip('\n').split()])
 
 fig, ax = plt.subplots(1,1)
-ax.errorbar(data[:,0],data[:,1],yerr = data[:,2])
+ax.plot(data[:,0],data[:,1])
+ax.fill_between(data[:,0],data[:,1]- data[:,2],data[:,1]+data[:,2],facecolor='green',alpha=0.2)
 ax.set_xlabel('Time (s)')
 ax.set_ylabel('N in m=0')
 ax.set_title('Spinor Reversal: wavefunction recovered is {:>5.2f}'.format(np.mean(data[:,3])))

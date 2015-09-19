@@ -54,21 +54,23 @@ start = timemod.time()
 init_state_solver = 'coherent_state'
 propogate = 'Chebychev'
 species = 'Na'
-b_field = 0.0           #BField
-n_tot = 400            #TotalAtomNumber
+b_field = 37           #BField in microtesla
+n_tot = 5000            #TotalAtomNumber
 mag = 0                 #Magnetization
-mag_range = 7           #MagRange
-atom_range = 40         #AtomRange
+mag_range = 4           #MagRange
+atom_range = 50         #AtomRange
 spinor_phase = 0.0      #SpinorPhase
-n_0 = n_tot-4             #N_0 numbers tarting in m=0
-c_init = 36             #C_init in Hz
+n_0 = n_tot#-4             #N_0 numbers tarting in m=0
+c_init = 36*2*np.pi             #C_init in Hz
 filename = 'results.txt'
 
 eqz = 0.02768 * b_field**2
 ndiv = 3
 delta_t= [0.01,0.001,0.01]
-c = [36,36,36]
-emw = [-2.5,-426,-2.5]
+#c = [36,36,36]
+c = [c_init,c_init,c_init]
+#emw = [-2.5,-426,-2.5]
+emw = [0,0,0]
 n_step = [30,6,30]
 
 #now we want to allocate numpy array

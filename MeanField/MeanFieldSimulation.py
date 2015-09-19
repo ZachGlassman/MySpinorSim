@@ -23,9 +23,9 @@ def f(t,y,*args):
     z0i = y[1]
     zmi = y[2]
     #now define equations
-    f0 = ((p1*B+q1*B**2+qu1)*z1i + c*((msqr(z1i) + msqr(z0i) - msqr(zmi))*z1i + z0i*z0i*np.conj(zmi)))*np.complex(0,-1)
-    f1 = ((p0*B+q0*B**2+qu0)*z0i + c*((msqr(z1i) + msqr(zmi))*z0i + 2*z1i*zmi*np.conj(z0i)))*np.complex(0,-1)
-    f2 = ((pm1*B+qm1*B**2+qum1)*zmi + c*((msqr(zmi) + msqr(z0i) - msqr(z1i))*zmi + z0i*z0i*np.conj(z1i)))*np.complex(0,-1)
+    f0 = ((p1*B+q1*B*B+qu1)*z1i + c*((msqr(z1i) + msqr(z0i) - msqr(zmi))*z1i + z0i*z0i*np.conj(zmi)))*np.complex(0,-1)
+    f1 = ((p0*B+q0*B*B+qu0)*z0i + c*((msqr(z1i) + msqr(zmi))*z0i + 2*z1i*zmi*np.conj(z0i)))*np.complex(0,-1)
+    f2 = ((pm1*B+qm1*B*B+qum1)*zmi + c*((msqr(zmi) + msqr(z0i) - msqr(z1i))*zmi + z0i*z0i*np.conj(z1i)))*np.complex(0,-1)
     return [f0,f1,f2]
     
 def rf(t,y,*args):
@@ -61,30 +61,24 @@ def generate_states(N,s):
     sy = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size =s)
     nyz = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = s)
     nxz = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = s)
-    txipi = -(sy + nyz)/(sx + nxz)
-    tximi = (sy-nyz)/(sx-nxz)
-    def pos(x):
-        if x < 0:
-            return x + np.pi
-        else:
-            return x
-    txip = np.asarray([pos(i) for i in txipi])
-    txim = np.asarray([pos(i) for i in tximi])
+
+    txip = np.arctan(-(sy + nyz)/(sx+ nxz))
+    txim = np.arctan((sy-nyz)/(sx-nxz))
     
    
-    a = (sx+nxz)**2/(np.cos(np.arctan(txip)))**2
-    b = (sx-nxz)**2/(np.cos(np.arctan(txim)))**2
+    a = (sx+nxz)**2/(np.cos(txip))**2
+    b = (sx-nxz)**2/(np.cos(txim))**2
    
 
-    rho_0 = 1/2 + scimath.sqrt(1/4-1/8*(a+b))
-    m = 1/(8 * rho_0)*(a-b)
+    rho_0 = 1/2 + scimath.sqrt(1/4-(a+b)/8)
+    m = 1/rho_0*(a-b)/8
 
             
     states = np.zeros((len(m),3),dtype = complex)
     
-    states[:,0] = scimath.sqrt((1-rho_0+m)/2) * np.exp(np.arctan(txip)*1j)
+    states[:,0] = scimath.sqrt((1-rho_0+m)/2) * np.exp(txip*1j)
     states[:,1] = scimath.sqrt(rho_0)
-    states[:,2] = scimath.sqrt((1-rho_0-m)/2) * np.exp(np.arctan(txim)*1j)
+    states[:,2] = scimath.sqrt((1-rho_0-m)/2) * np.exp(txim*1j)
     
     return states
 
@@ -151,27 +145,29 @@ def get_exp_values(sol,step_size):
     
     
 if __name__ == '__main__':
-    #first define arrays
     #define problem parameters
     pars = {}
-    pars['dt'] = .6e-4
+    pars['dt'] = .1e-4
     tfinal = .3
 
     t = np.linspace(0, tfinal , int( tfinal/pars['dt'] ))
     pars['tfinal'] = t[-1] - pars['dt']
    
    
-    c =2*np.pi*7.5 #2*np.pi*36
-    B = 0.21#0.37  #Gauss
+    #c =2*np.pi*36
+    #B = 0.37  #Gauss
+    c = 2 * np.pi * -7.5
+    B = 0.21
     p1 = 0
     p0 = 0
     pm1 = 0
     qu1 = 0
     qu0 = 0
     qum1= 0
-    q1 = 2*np.pi * 72
+    #q1 = 2*np.pi * 276.8
+    q1 = 2 *np.pi * 72
     q0 = 0
-    qm1= 2*np.pi * 72
+    qm1= q1
     
     
     #generate array
@@ -188,10 +184,10 @@ if __name__ == '__main__':
     pars['c_arr'] = validate(c,t)
     
     #now start calculation
-    N = 5000
+    N = 8000
     start = time.time()
-    states = generate_states(N,400)
-    step_size = 50
+    states = generate_states(N,200)
+    step_size = 20
     ans = np.zeros((len(states),3,len(t[::step_size])))
     
     #do calculation
@@ -209,5 +205,7 @@ if __name__ == '__main__':
         s = np.std(ans[:,i],axis = 0)
         ax[i].plot(t[::step_size],m)
         ax[i].fill_between(t[::step_size,],m-s,m+s,facecolor='green',alpha=0.2)
+        
+    np.savetxt('meanout.txt',np.vstack((t[::step_size],np.mean(ans[:,0],axis = 0))))
     plt.tight_layout()
     plt.show()
