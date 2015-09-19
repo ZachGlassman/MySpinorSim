@@ -208,7 +208,7 @@ if __name__ == '__main__':
     simulation_params = {
     'total_time': .25, #simulated time (s),
     'mag_time':0.015,
-    'dt':0.004e-3, #simulation time step,
+    'dt':0.002e-3, #simulation time step,
     'tauB' : 1e-3,
     #'c':36*2*np.pi,
     'c':-7.5*2*np.pi,
