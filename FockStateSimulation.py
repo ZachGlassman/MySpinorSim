@@ -170,8 +170,7 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c):
     n0var = np.zeros(num_steps)
     sxsqr = np.zeros(num_steps)
     qyzsqr = np.zeros(num_steps)
-    #bf = 276.8* .37**2 * 2*np.pi
-    bf = 144 * 2 *np.pi * .21**2 #2q included here
+    bf = 2*276.8* .37**2 * 2*np.pi #2q
     #now evolve in time
     write_progress(0,num_steps)
     for i in range(num_steps):
@@ -206,13 +205,12 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c):
 #############################################
 if __name__ == '__main__':
     simulation_params = {
-    'total_time': .25, #simulated time (s),
+    'total_time': .02, #simulated time (s),
     'mag_time':0.015,
-    'dt':0.002e-3, #simulation time step,
+    'dt':0.0002e-3, #simulation time step,
     'tauB' : 1e-3,
-    #'c':36*2*np.pi,
-    'c':-7.5*2*np.pi,
-    'n_atoms':40000,
+    'c':36,
+    'n_atoms':4000,
     }
     s = time.time()
     main(**simulation_params)

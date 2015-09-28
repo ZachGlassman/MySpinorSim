@@ -147,25 +147,22 @@ def get_exp_values(sol,step_size):
 if __name__ == '__main__':
     #define problem parameters
     pars = {}
-    pars['dt'] = .1e-4
-    tfinal = .3
+    pars['dt'] = .12e-4
+    tfinal = .01
 
     t = np.linspace(0, tfinal , int( tfinal/pars['dt'] ))
     pars['tfinal'] = t[-1] - pars['dt']
    
    
-    #c =2*np.pi*36
-    #B = 0.37  #Gauss
-    c = 2 * np.pi * -7.5
-    B = 0.21
+    B = 0.37  #Gauss
+    c = 36
     p1 = 0
     p0 = 0
     pm1 = 0
     qu1 = 0
     qu0 = 0
     qum1= 0
-    #q1 = 2*np.pi * 276.8
-    q1 = 2 *np.pi * 72
+    q1 = 2*np.pi * 276.8
     q0 = 0
     qm1= q1
     
@@ -184,7 +181,7 @@ if __name__ == '__main__':
     pars['c_arr'] = validate(c,t)
     
     #now start calculation
-    N = 8000
+    N = 40000
     start = time.time()
     states = generate_states(N,200)
     step_size = 20
@@ -200,12 +197,17 @@ if __name__ == '__main__':
     print('Now Plotting')
     #plot it
     fig, ax = plt.subplots(3,1)
-    for i in range(3):
-        m = np.mean(ans[:,i],axis = 0)
-        s = np.std(ans[:,i],axis = 0)
-        ax[i].plot(t[::step_size],m)
-        ax[i].fill_between(t[::step_size,],m-s,m+s,facecolor='green',alpha=0.2)
-        
+    
+    m = np.mean(ans[:,0],axis = 0)
+    s = np.std(ans[:,0],axis = 0)
+    ax[0].plot(t[::step_size],m)
+    ax[0].fill_between(t[::step_size],m-s,m+s,facecolor='green',alpha=0.2)
+    sxval = np.mean(ans[:,1],axis =0)
+    qyzval = np.mean(ans[:,2],axis =0)
+    ax[1].plot(t[::step_size],sxval)
+    ax[2].plot(t[::step_size],qyzval)
+    ax[1].set_yscale('log')
+    ax[2].set_yscale('log')
     np.savetxt('meanout.txt',np.vstack((t[::step_size],np.mean(ans[:,0],axis = 0))))
     plt.tight_layout()
     plt.show()
