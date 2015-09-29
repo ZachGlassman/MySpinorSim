@@ -8,17 +8,16 @@ Solves the mean field equations of motion for a spinor condensate
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import ode
+from scipy.integrate import complex_ode
 from numpy.lib import scimath
 import sys
 import time
-import argparse
 
 #first define the system dy/dt = f(y,t)
 def msqr(x):
     return np.conj(x) * x
 
-def f(t,y,B,p1,p0,pm1,qu1,qu0,qum1,q1,q0,qm1,c):
+def f(t,y,*args):
     """system of ode we want to solve"""
     z1i = y[0]
     z0i = y[1]
@@ -34,9 +33,7 @@ def rf(t,y,*args):
     dp/dm = omega_b - Delta pm delta
     where omega_b is field frequency
     Delta = 1/2 mu_b B_z
-    delta = detuning
-    
-    sigma = Rabi frequency"""
+    delta = detuning """
     c1 = y[0]
     c0 = y[1]
     cm1 = y[2]
@@ -86,31 +83,30 @@ def generate_states(N,s):
     return states
 
 
-def solve_system(y0, B, p1, p0, pm1,qu1,qu0,qum1,q1,q0,qm1,c,t):
-    """solve the system by going through time and integrating the proper
-    equations using the correct equation"""
-    r = ode(f).set_integrator('zvode')
+def solve_system(y0, B_arr, p1_arr, p0_arr, pm1_arr,qu1_arr,qu0_arr,qum1_arr,
+                 q1_arr,q0_arr,qm1_arr,c_arr,tfinal,dt):
+    r = complex_ode(f)
     r.set_initial_value(y0,0)
-    e = ode(rf).set_integrator('zvode')
-    e.set_initial_value(y0,0)
     #r.set_integrator('dopri5')
-    ans = np.zeros((len(B),3),dtype = complex)
-    for step, time in enumerate(t[1:-1]):
+    ans = np.zeros((len(B_arr),3),dtype = complex)
+    step  = 0
+    while r.successful() and r.t < tfinal:
         #update the parameters
-        r.set_f_params(B[step],
-                       p1[step],
-                       p0[step],
-                       pm1[step],
-                       qu1[step],
-                       qu0[step],
-                       qum1[step],
-                       q1[step],
-                       q0[step],
-                       qm1[step],
-                       c[step])
-        ans[step] = np.asarray(r.integrate(t[step+1]))
+        B = B_arr[step]
+        p1 = p1_arr[step]
+        p0 = p0_arr[step]
+        pm1 = pm1_arr[step]
+        qu1 = qu1_arr[step]
+        qu0 = qu0_arr[step]
+        qum1 = qum1_arr[step]
+        q1 = q1_arr[step]
+        q0 = q0_arr[step]
+        qm1 = qm1_arr[step]
+        c = c_arr[step]
+        ans[step] = np.asarray(r.integrate(r.t + dt))
+        step += 1
     return ans
-
+    
     
 def validate(par,t):
     """function to validate arrays"""
@@ -146,20 +142,19 @@ def get_exp_values(sol,step_size):
     sx_calc = np.asarray([S_x.apply(i) for i in sol[::step_size]])
     nyz_calc = np.asarray([N_yz.apply(i) for i in sol[::step_size]])
     return np.asarray([r_0, sx_calc, nyz_calc])
- 
- 
-def main(args):
-    """main routine for integration
-    problem is setup for arbitrary RF pulses
     
     
-    """
+if __name__ == '__main__':
     #define problem parameters
     pars = {}
-    print(args.pulses)
-    t = np.linspace(0, args.tfinal , int(args.tfinal/args.dt))
-    
-    B = 0.27  #Gauss
+    pars['dt'] = .12e-4
+    tfinal = .01
+
+    t = np.linspace(0, tfinal , int( tfinal/pars['dt'] ))
+    pars['tfinal'] = t[-1] - pars['dt']
+   
+   
+    B = 0.37  #Gauss
     c = 36
     p1 = 0
     p0 = 0
@@ -173,19 +168,18 @@ def main(args):
     
     
     #generate array
-    pars['B'] = validate(B,t)
-    pars['p1'] = validate(p1,t)
-    pars['p0'] = validate(p0,t)
-    pars['pm1'] = validate(pm1,t)
-    pars['qu1'] = validate(qu1,t)
-    pars['qu0'] = validate(qu0,t)
-    pars['qum1'] = validate(qum1,t)
-    pars['q1'] = validate(q1,t)
-    pars['q0'] = validate(q0,t)
-    pars['qm1'] = validate(qm1,t)
-    pars['c'] = validate(c,t)
-    pars['t'] = t
-
+    pars['B_arr'] = validate(B,t)
+    pars['p1_arr'] = validate(p1,t)
+    pars['p0_arr'] = validate(p0,t)
+    pars['pm1_arr'] = validate(pm1,t)
+    pars['qu1_arr'] = validate(qu1,t)
+    pars['qu0_arr'] = validate(qu0,t)
+    pars['qum1_arr'] = validate(qum1,t)
+    pars['q1_arr'] = validate(q1,t)
+    pars['q0_arr'] = validate(q0,t)
+    pars['qm1_arr'] = validate(qm1,t)
+    pars['c_arr'] = validate(c,t)
+    
     #now start calculation
     N = 40000
     start = time.time()
@@ -200,67 +194,20 @@ def main(args):
         ans[i] = get_exp_values(solve_system(state,**pars),step_size)
     end = time.time()
     print('\nCalculation Finished in time:','{:<.2f}'.format(end-start))
-    print('Now Outputting')
+    print('Now Plotting')
+    #plot it
+    fig, ax = plt.subplots(3,1)
     
-    #output routine
     m = np.mean(ans[:,0],axis = 0)
     s = np.std(ans[:,0],axis = 0)
+    ax[0].plot(t[::step_size],m)
+    ax[0].fill_between(t[::step_size],m-s,m+s,facecolor='green',alpha=0.2)
+    sxval = np.mean(ans[:,1],axis =0)
+    qyzval = np.mean(ans[:,2],axis =0)
+    ax[1].plot(t[::step_size],sxval)
+    ax[2].plot(t[::step_size],qyzval)
+    ax[1].set_yscale('log')
+    ax[2].set_yscale('log')
     np.savetxt('meanout.txt',np.vstack((t[::step_size],np.mean(ans[:,0],axis = 0))))
-    
-    try:
-        fig, ax = plt.subplots(3,1)
-        ax[0].plot(t[::step_size],m)
-        ax[0].fill_between(t[::step_size],m-s,m+s,facecolor='green',alpha=0.2)
-        sxval = np.mean(ans[:,1],axis =0)
-        qyzval = np.mean(ans[:,2],axis =0)
-        ax[1].plot(t[::step_size],sxval)
-        ax[2].plot(t[::step_size],qyzval)
-        ax[1].set_yscale('log')
-        ax[2].set_yscale('log')
-        plt.tight_layout()
-        plt.show()
-    except:
-        print('No display hooked up, output saved')
-    
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-N', action = 'store',
-                        dest = 'N',
-                        default = 40000,
-                        type = int,
-                        help = 'Number of Atoms in Simulation')
-     
-     
-    parser.add_argument('-dt',action = 'store',
-                        dest = 'dt',
-                        default = .12e-4,
-                        type = float,
-                        help = 'Integration timestep')
-                        
-    parser.add_argument('-t', action= 'store',
-                        dest = 'tfinal',
-                        default = '.01',
-                        type = float,
-                        help = 'Length of Integration Time')
-                        
-    parser.add_argument('-ps', action = 'store',
-                        dest = 'pulses',
-                        nargs= '+',
-                        default = None,
-                        type = float,
-                        help = 'sequence of pulse start times')
-                        
-    parser.add_argument('-pe', action = 'store',
-                        dest = 'pulses',
-                        nargs= '+',
-                        default = None,
-                        type = float,
-                        help = 'sequence of pulse end times')
-                        
-    parser.add_argument('-o', action = 'store',
-                        dest = 'rabi',
-                        default = .0001,
-                        type = float,
-                        help = 'rabi frequency')
-    results = parser.parse_args()
-    main(results)
+    plt.tight_layout()
+    plt.show()
