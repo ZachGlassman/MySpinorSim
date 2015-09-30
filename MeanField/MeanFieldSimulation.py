@@ -147,8 +147,21 @@ def get_exp_values(sol,step_size):
     nyz_calc = np.asarray([N_yz.apply(i) for i in sol[::step_size]])
     return np.asarray([r_0, sx_calc, nyz_calc])
  
- 
-def main(args):
+def create_time_array(tf,dt,ps,pd):
+    """function to create time array from pulse durations
+       returns another array with boolean values for integrate spinor
+    """
+    if ps == None:
+        return np.linspace(0, tf , int(tf/dt))
+    elif len(ps) == 0:
+        return np.linspace(0, tf , int(tf/dt))
+    else:
+        #we have some pulses check if they are at beginning
+        #don't assume they are sorted, so sort with durations
+        pass
+        
+        
+def single_simulation(N,tfinal,dt,pulse_start,pulse_dur,rabi):
     """main routine for integration
     problem is setup for arbitrary RF pulses
     
@@ -156,8 +169,11 @@ def main(args):
     """
     #define problem parameters
     pars = {}
-    print(args.pulses)
-    t = np.linspace(0, args.tfinal , int(args.tfinal/args.dt))
+    if pulse_start != None:
+        if len(pulse_start) != len(pulse_dur):
+            print('Improper Pulse specification')
+        
+    t = create_time_array(tfinal,dt,pulse_start,pulse_dur)   
     
     B = 0.27  #Gauss
     c = 36
@@ -187,7 +203,6 @@ def main(args):
     pars['t'] = t
 
     #now start calculation
-    N = 40000
     start = time.time()
     states = generate_states(N,200)
     step_size = 20
@@ -244,23 +259,25 @@ if __name__ == '__main__':
                         help = 'Length of Integration Time')
                         
     parser.add_argument('-ps', action = 'store',
-                        dest = 'pulses',
+                        dest = 'pulse_start',
                         nargs= '+',
                         default = None,
                         type = float,
                         help = 'sequence of pulse start times')
                         
-    parser.add_argument('-pe', action = 'store',
-                        dest = 'pulses',
+    parser.add_argument('-pd', action = 'store',
+                        dest = 'pulse_dur',
                         nargs= '+',
                         default = None,
                         type = float,
-                        help = 'sequence of pulse end times')
+                        help = 'sequence of pulse durations')
                         
     parser.add_argument('-o', action = 'store',
                         dest = 'rabi',
                         default = .0001,
                         type = float,
                         help = 'rabi frequency')
-    results = parser.parse_args()
-    main(results)
+                        
+  
+    
+    single_simulation(**vars(parser.parse_args()))
