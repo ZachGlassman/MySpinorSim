@@ -158,7 +158,14 @@ def create_time_array(tf,dt,ps,pd):
     else:
         #we have some pulses check if they are at beginning
         #don't assume they are sorted, so sort with durations
-        pass
+        ps, pd = (list(t) for t in zip(*sorted(zip(ps, pd))))
+        #build list of linspaces, then merge
+        t = []
+        #now check if first list is at zero
+        if ps[0] == 0:
+            t.append(np.linspace(0,ps[0]+ds[0]))
+            
+         
         
         
 def single_simulation(N,tfinal,dt,pulse_start,pulse_dur,rabi):
