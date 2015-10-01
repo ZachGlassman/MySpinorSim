@@ -3,6 +3,11 @@
 Created on Wed Sep  9 23:01:45 2015
 Mean field simulation
 Solves the mean field equations of motion for a spinor condensate
+
+Two types of pulses:
+Microwave - Changes effective q
+RF - induces population transfer, evolve under mean field equations of spin flips
+Model only valid when pulse duration small (<.1 ms)
 @author: zachg
 """
 
@@ -12,7 +17,6 @@ from scipy.integrate import ode
 from numpy.lib import scimath
 import sys
 import time
-import argparse
 
 #first define the system dy/dt = f(y,t)
 def msqr(x):
@@ -29,7 +33,7 @@ def f(t,y,B,p1,p0,pm1,qu1,qu0,qum1,q1,q0,qm1,c):
     f2 = ((pm1*B+qm1*B*B+qum1)*zmi + c*((msqr(zmi) + msqr(z0i) - msqr(z1i))*zmi + z0i*z0i*np.conj(z1i)))*np.complex(0,-1)
     return [f0,f1,f2]
     
-def rf(t,y,*args):
+def rf(t,y,sigma,dm,dp):
     """rf ode
     dp/dm = omega_b - Delta pm delta
     where omega_b is field frequency
@@ -37,6 +41,7 @@ def rf(t,y,*args):
     delta = detuning
     
     sigma = Rabi frequency"""
+  
     c1 = y[0]
     c0 = y[1]
     cm1 = y[2]
@@ -67,16 +72,12 @@ def generate_states(N,s):
 
     txip = np.arctan(-(sy + nyz)/(sx+ nxz))
     txim = np.arctan((sy-nyz)/(sx-nxz))
-    
-   
     a = (sx+nxz)**2/(np.cos(txip))**2
     b = (sx-nxz)**2/(np.cos(txim))**2
    
-
     rho_0 = 1/2 + scimath.sqrt(1/4-(a+b)/8)
     m = 1/rho_0*(a-b)/8
 
-            
     states = np.zeros((len(m),3),dtype = complex)
     
     states[:,0] = scimath.sqrt((1-rho_0+m)/2) * np.exp(txip*1j)
@@ -86,29 +87,44 @@ def generate_states(N,s):
     return states
 
 
-def solve_system(y0, B, p1, p0, pm1,qu1,qu0,qum1,q1,q0,qm1,c,t):
+def solve_system(y0, B, p1, p0, pm1,qu1,qu0,qum1,q1,q0,qm1,c,t_arr,pulses):
     """solve the system by going through time and integrating the proper
-    equations using the correct equation"""
+    equations using the correct equation
+    going in steps, for each step do proper integration"""
     r = ode(f).set_integrator('zvode')
-    r.set_initial_value(y0,0)
     e = ode(rf).set_integrator('zvode')
-    e.set_initial_value(y0,0)
-    #r.set_integrator('dopri5')
     ans = np.zeros((len(B),3),dtype = complex)
-    for step, time in enumerate(t[1:-1]):
-        #update the parameters
-        r.set_f_params(B[step],
-                       p1[step],
-                       p0[step],
-                       pm1[step],
-                       qu1[step],
-                       qu0[step],
-                       qum1[step],
-                       q1[step],
-                       q0[step],
-                       qm1[step],
-                       c[step])
-        ans[step] = np.asarray(r.integrate(t[step+1]))
+    ans[0] = y0
+    step = 1
+    for per, t in enumerate(t_arr):
+        y0 = ans[step-1]
+        if pulses[per]['spinor']:
+            r.set_initial_value(y0,t[0])
+            for tstep in range(len(t)-1):
+                #update the parameters
+                r.set_f_params(B[step],
+                               p1[step],
+                               p0[step],
+                               pm1[step],
+                               qu1[step],
+                               qu0[step],
+                               qum1[step],
+                               q1[step],
+                               q0[step],
+                               qm1[step],
+                               c[step])
+                ans[step] = np.asarray(r.integrate(t[tstep+1]))
+                step = step + 1
+            
+        else:
+            e.set_initial_value(y0,t[0])
+            e.set_f_params(1,1,1)
+            for tstep in range(len(t)-1):
+                #update the parameters
+                ans[step] = np.asarray(e.integrate(t[tstep+1]))
+                step = step + 1
+       
+        
     return ans
 
     
@@ -122,8 +138,20 @@ def validate(par,t):
     else:
         print('check array dimensions')
 
+def validate_q(par,t_arr, pulses):
+    """validate the q array for microwave pulses
+    assume q is set as scalar"""
+    ans = []
+    for i, t in enumerate(t_arr):
+        if pulses[i]['type'] == 'MW':
+            q = pulses[i]['other'][0]
+            ans.append(np.asarray([q for i in t]))
+        else:
+            ans.append(np.asarray([par for i in t]))
+    return np.hstack(ans)
+
 #fancy writeout
-def write_progress(step,total,string = None):
+def write_progress(step,total,string = 'Evolve'):
     """write the progress out to the window"""
     perc_done = step/(total) * 100
     #50 character string always
@@ -147,40 +175,87 @@ def get_exp_values(sol,step_size):
     nyz_calc = np.asarray([N_yz.apply(i) for i in sol[::step_size]])
     return np.asarray([r_0, sx_calc, nyz_calc])
  
-def create_time_array(tf,dt,ps,pd):
+def create_pulse_arrays(tf,dt,ps,pd,pt,pa):
     """function to create time array from pulse durations
        returns another array with boolean values for integrate spinor
     """
     if ps == None:
-        return np.linspace(0, tf , int(tf/dt))
+        return [np.linspace(0, tf , int(tf/dt))],[True]
     elif len(ps) == 0:
-        return np.linspace(0, tf , int(tf/dt))
+        return [np.linspace(0, tf , int(tf/dt))],[True]
     else:
         #we have some pulses check if they are at beginning
         #don't assume they are sorted, so sort with durations
         ps, pd = (list(t) for t in zip(*sorted(zip(ps, pd))))
         #build list of linspaces, then merge
         t = []
-        #now check if first list is at zero
-        if ps[0] == 0:
-            t.append(np.linspace(0,ps[0]+ds[0]))
+        #We will assume no pulse at beginnging (state is inialized)
+        #thus we need to alternate between spinor evolution and pulse
+        t.append(np.linspace(0,ps[0],int(ps[0]/dt),endpoint=False))
+        for i in range(len(ps)):
+            #apply pulse
+            t.append(np.linspace(ps[i],ps[i]+pd[i],
+                                 int(pd[i]/(dt*1e-3)),
+                                 endpoint=False))
+            #now apply spinor evolution
+            start = ps[i]+pd[i]
+            if (i+1) < len(ps):
+                end = ps[i+1]
+            else:
+                end = tf
+            t.append(np.linspace(start,end,int((end-start)/dt),endpoint=False))
+        #now go through and build pulse dictionary
+        pulse_info = []
+        spinor = True
+        pc = 0
+        for i in range(len(t)):
+            ans = {}
+            if spinor == True:
+                ans['spinor'] = True
+                ans['type'] = 'Free'
+                pulse_info.append(ans)
+                spinor = False
+            else:
+                ans['spinor'] = False
+                ans['type'] = pt[pc]
+                if ans['type'] != 'RF':
+                    ans['spinor'] = True
+                ans['other'] = pa[pc]
+                pulse_info.append(ans)
+                spinor = True
+                pc +=1
+        return t, pulse_info
             
          
         
         
-def single_simulation(N,tfinal,dt,pulse_start,pulse_dur,rabi):
+def single_simulation(N,tfinal,dt,pulses):
     """main routine for integration
     problem is setup for arbitrary RF pulses
-    
-    
+    pulse_dict
+    structure pulsees
+        [start,dur,type,*params]
+        
+    for microwave pulse, just change q
+    so we can just write that into the arrays
     """
     #define problem parameters
-    pars = {}
+    
+    pulse_start = [i[0] for i in pulses]
+    pulse_dur = [i[1] for i in pulses]
+    pulse_type = [i[2] for i in pulses]
+    pulse_args = [i[3:] for i in pulses]
     if pulse_start != None:
         if len(pulse_start) != len(pulse_dur):
             print('Improper Pulse specification')
-        
-    t = create_time_array(tfinal,dt,pulse_start,pulse_dur)   
+            
+    t_arr,pulses = create_pulse_arrays(tfinal,
+                                     dt,
+                                     pulse_start,
+                                     pulse_dur,
+                                     pulse_type,
+                                     pulse_args)
+                                     
     
     B = 0.27  #Gauss
     c = 36
@@ -196,6 +271,8 @@ def single_simulation(N,tfinal,dt,pulse_start,pulse_dur,rabi):
     
     
     #generate array
+    t = np.hstack(t_arr)
+    pars = {}
     pars['B'] = validate(B,t)
     pars['p1'] = validate(p1,t)
     pars['p0'] = validate(p0,t)
@@ -203,15 +280,15 @@ def single_simulation(N,tfinal,dt,pulse_start,pulse_dur,rabi):
     pars['qu1'] = validate(qu1,t)
     pars['qu0'] = validate(qu0,t)
     pars['qum1'] = validate(qum1,t)
-    pars['q1'] = validate(q1,t)
+    pars['q1'] = validate_q(q1,t_arr,pulses)
     pars['q0'] = validate(q0,t)
-    pars['qm1'] = validate(qm1,t)
+    pars['qm1'] = validate_q(qm1,t_arr,pulses)
     pars['c'] = validate(c,t)
-    pars['t'] = t
-
+    pars['t_arr'] = t_arr
+    pars['pulses'] = pulses
     #now start calculation
     start = time.time()
-    states = generate_states(N,200)
+    states = generate_states(N,100)
     step_size = 20
     ans = np.zeros((len(states),3,len(t[::step_size])))
     
@@ -245,46 +322,7 @@ def single_simulation(N,tfinal,dt,pulse_start,pulse_dur,rabi):
         print('No display hooked up, output saved')
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-N', action = 'store',
-                        dest = 'N',
-                        default = 40000,
-                        type = int,
-                        help = 'Number of Atoms in Simulation')
-     
-     
-    parser.add_argument('-dt',action = 'store',
-                        dest = 'dt',
-                        default = .12e-4,
-                        type = float,
-                        help = 'Integration timestep')
-                        
-    parser.add_argument('-t', action= 'store',
-                        dest = 'tfinal',
-                        default = '.01',
-                        type = float,
-                        help = 'Length of Integration Time')
-                        
-    parser.add_argument('-ps', action = 'store',
-                        dest = 'pulse_start',
-                        nargs= '+',
-                        default = None,
-                        type = float,
-                        help = 'sequence of pulse start times')
-                        
-    parser.add_argument('-pd', action = 'store',
-                        dest = 'pulse_dur',
-                        nargs= '+',
-                        default = None,
-                        type = float,
-                        help = 'sequence of pulse durations')
-                        
-    parser.add_argument('-o', action = 'store',
-                        dest = 'rabi',
-                        default = .0001,
-                        type = float,
-                        help = 'rabi frequency')
-                        
-  
-    
-    single_simulation(**vars(parser.parse_args()))
+    """main function for command line utility, won't usually be used
+    in this way
+    """
+    print('functionality not enabled at this time')

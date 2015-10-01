@@ -68,7 +68,7 @@ def tri_ham(c,bfield,psi,n_atoms):
     ans = np.empty(len(psi), dtype = complex)
     #first for diagonal interation
     for i in range(len(psi)):
-        ans[i] = (i*(2*(n_atoms-2*i))-1)* c/n_atoms*psi[i] + bfield * i*psi[i]
+        ans[i] = (i*(2*(n_atoms-2*i))-1)* c/n_atoms*psi[i] +2* bfield * i*psi[i]
     #now for ineraction with kp = i-1
     for i in range(1,len(psi)):
         ans[i] += i * np.sqrt((n_atoms - 2 * (i-1) - 1)*(n_atoms - 2*(i-1)))*psi[i-1]* c/n_atoms
@@ -105,7 +105,7 @@ def get_bfield(bfield,b_steps,step):
         ans =  bfield[step]
     else:
         ans =  0.21
-    return 2*np.pi * 276.8 * ans**2
+    return 2*np.pi * 276.8 * ans**2*2
   
         
 #fancy writeout
@@ -170,7 +170,7 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c):
     n0var = np.zeros(num_steps)
     sxsqr = np.zeros(num_steps)
     qyzsqr = np.zeros(num_steps)
-    bf = 2*276.8* .37**2 * 2*np.pi #2q
+    bf = 276.8* .37**2 * 2*np.pi #q
     #now evolve in time
     write_progress(0,num_steps)
     for i in range(num_steps):
@@ -207,7 +207,7 @@ if __name__ == '__main__':
     simulation_params = {
     'total_time': .02, #simulated time (s),
     'mag_time':0.015,
-    'dt':0.0002e-3, #simulation time step,
+    'dt':0.002e-3, #simulation time step,
     'tauB' : 1e-3,
     'c':36,
     'n_atoms':4000,
