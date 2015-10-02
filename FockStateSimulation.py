@@ -159,7 +159,7 @@ def calc_qyz_sqr(psi,n):
 ###############################################
 # main routine
 ###############################################
-def main(total_time,dt,mag_time,tauB,n_atoms,c):
+def main(total_time,dt,mag_time,tauB,n_atoms,c,plot=True):
     params,num_steps,b_steps,b_field = set_up_simulation(total_time,
                                                 dt,tauB,mag_time,c,n_atoms)
                                                                              
@@ -170,7 +170,7 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c):
     n0var = np.zeros(num_steps)
     sxsqr = np.zeros(num_steps)
     qyzsqr = np.zeros(num_steps)
-    bf = 276.8* .37**2 * 2*np.pi #q
+    bf = 276.8* .37**2 #* 2*np.pi #q
     #now evolve in time
     write_progress(0,num_steps)
     for i in range(num_steps):
@@ -183,21 +183,25 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c):
             
     step_size = 50 #don't plot all data
     time = np.asarray([i * dt for i in range(0,num_steps,step_size)] )
-    fig, ax = plt.subplots(3,1)
-    ax[0].fill_between(time,n0[::step_size]-np.sqrt(n0var[::step_size]),
-        n0[::step_size]-np.sqrt(n0var[::step_size]),facecolor='green',alpha=0.5)
-    ax[1].plot(time,sxsqr[::step_size],label = r'$S_x^2$')
-    ax[2].plot(time,qyzsqr[::step_size], label = r'$Q_{yz}^2$')
-    ax[1].set_title(r'$\ln\langle S_x^2\rangle$')
-    ax[2].set_title(r'$\ln\langle Q_{yz}^2\rangle$')
-    ax[0].set_title(r'$N_0$')
-    ax[2].set_xlabel('$t(s)$')
-    ax[1].set_yscale('log')
-    ax[2].set_yscale('log')
-    plt.tight_layout()
     tosave = np.vstack((time,n0[::step_size]))
     np.savetxt('fockout.txt',tosave)
-    plt.show()
+    if plot:
+        fig, ax = plt.subplots(3,1)
+        ax[0].fill_between(time,n0[::step_size]-np.sqrt(n0var[::step_size]),
+            n0[::step_size]-np.sqrt(n0var[::step_size]),facecolor='green',alpha=0.5)
+        ax[1].plot(time,sxsqr[::step_size],label = r'$S_x^2$')
+        ax[2].plot(time,qyzsqr[::step_size], label = r'$Q_{yz}^2$')
+        ax[1].set_title(r'$\ln\langle S_x^2\rangle$')
+        ax[2].set_title(r'$\ln\langle Q_{yz}^2\rangle$')
+        ax[0].set_title(r'$N_0$')
+        ax[2].set_xlabel('$t(s)$')
+        ax[1].set_yscale('log')
+        ax[2].set_yscale('log')
+        plt.tight_layout()
+        plt.show()
+    
+    print('\n simulation complete')
+    return tosave
         
            
 #############################################
@@ -205,12 +209,12 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c):
 #############################################
 if __name__ == '__main__':
     simulation_params = {
-    'total_time': .02, #simulated time (s),
+    'total_time': .05, #simulated time (s),
     'mag_time':0.015,
     'dt':0.002e-3, #simulation time step,
     'tauB' : 1e-3,
     'c':36,
-    'n_atoms':4000,
+    'n_atoms':5000,
     }
     s = time.time()
     main(**simulation_params)

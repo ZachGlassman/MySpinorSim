@@ -142,13 +142,17 @@ def validate_q(par,t_arr, pulses):
     """validate the q array for microwave pulses
     assume q is set as scalar"""
     ans = []
-    for i, t in enumerate(t_arr):
-        if pulses[i]['type'] == 'MW':
-            q = pulses[i]['other'][0]
-            ans.append(np.asarray([q for i in t]))
-        else:
-            ans.append(np.asarray([par for i in t]))
-    return np.hstack(ans)
+    if len(pulses) == 1:
+        #list is empty, no pulses
+        return validate(par,np.hstack(t_arr))
+    else:
+        for i, t in enumerate(t_arr):
+            if pulses[i]['type'] == 'MW':
+                q = pulses[i]['other'][0]
+                ans.append(np.asarray([q for i in t]))
+            else:
+                ans.append(np.asarray([par for i in t]))
+        return np.hstack(ans)
 
 #fancy writeout
 def write_progress(step,total,string = 'Evolve'):
@@ -180,9 +184,15 @@ def create_pulse_arrays(tf,dt,ps,pd,pt,pa):
        returns another array with boolean values for integrate spinor
     """
     if ps == None:
-        return [np.linspace(0, tf , int(tf/dt))],[True]
+        ans = {}
+        ans['spinor'] = True
+        ans['type'] = 'Free'
+        return [np.linspace(0, tf , int(tf/dt))],[ans]
     elif len(ps) == 0:
-        return [np.linspace(0, tf , int(tf/dt))],[True]
+        ans = {}
+        ans['spinor'] = True
+        ans['type'] = 'Free'
+        return [np.linspace(0, tf , int(tf/dt))],[ans]
     else:
         #we have some pulses check if they are at beginning
         #don't assume they are sorted, so sort with durations
@@ -229,7 +239,7 @@ def create_pulse_arrays(tf,dt,ps,pd,pt,pa):
          
         
         
-def single_simulation(N,tfinal,dt,pulses):
+def single_simulation(N,nsamps,tfinal,dt,pulses,plot=True):
     """main routine for integration
     problem is setup for arbitrary RF pulses
     pulse_dict
@@ -249,7 +259,7 @@ def single_simulation(N,tfinal,dt,pulses):
         if len(pulse_start) != len(pulse_dur):
             print('Improper Pulse specification')
             
-    t_arr,pulses = create_pulse_arrays(tfinal,
+    t_arr,pulse_seq = create_pulse_arrays(tfinal,
                                      dt,
                                      pulse_start,
                                      pulse_dur,
@@ -257,19 +267,18 @@ def single_simulation(N,tfinal,dt,pulses):
                                      pulse_args)
                                      
     
-    B = 0.27  #Gauss
-    c = 36
+    B = 0.37  #Gauss
+    c = 36*2*np.pi
     p1 = 0
     p0 = 0
     pm1 = 0
     qu1 = 0
     qu0 = 0
-    qum1= 0
-    q1 = 2*np.pi * 276.8
+    qum1= qu1
+    q1 = 276.8
     q0 = 0
     qm1= q1
-    
-    
+
     #generate array
     t = np.hstack(t_arr)
     pars = {}
@@ -280,15 +289,15 @@ def single_simulation(N,tfinal,dt,pulses):
     pars['qu1'] = validate(qu1,t)
     pars['qu0'] = validate(qu0,t)
     pars['qum1'] = validate(qum1,t)
-    pars['q1'] = validate_q(q1,t_arr,pulses)
+    pars['q1'] = validate_q(q1,t_arr,pulse_seq)
     pars['q0'] = validate(q0,t)
-    pars['qm1'] = validate_q(qm1,t_arr,pulses)
+    pars['qm1'] = validate_q(qm1,t_arr,pulse_seq)
     pars['c'] = validate(c,t)
     pars['t_arr'] = t_arr
-    pars['pulses'] = pulses
+    pars['pulses'] = pulse_seq
     #now start calculation
     start = time.time()
-    states = generate_states(N,100)
+    states = generate_states(N,nsamps)
     step_size = 20
     ans = np.zeros((len(states),3,len(t[::step_size])))
     
@@ -299,14 +308,14 @@ def single_simulation(N,tfinal,dt,pulses):
         ans[i] = get_exp_values(solve_system(state,**pars),step_size)
     end = time.time()
     print('\nCalculation Finished in time:','{:<.2f}'.format(end-start))
-    print('Now Outputting')
-    
+
     #output routine
     m = np.mean(ans[:,0],axis = 0)
     s = np.std(ans[:,0],axis = 0)
     np.savetxt('meanout.txt',np.vstack((t[::step_size],np.mean(ans[:,0],axis = 0))))
     
-    try:
+    
+    if plot:
         fig, ax = plt.subplots(3,1)
         ax[0].plot(t[::step_size],m)
         ax[0].fill_between(t[::step_size],m-s,m+s,facecolor='green',alpha=0.2)
@@ -318,8 +327,8 @@ def single_simulation(N,tfinal,dt,pulses):
         ax[2].set_yscale('log')
         plt.tight_layout()
         plt.show()
-    except:
-        print('No display hooked up, output saved')
+    
+    return np.vstack((t[::step_size],np.mean(ans[:,0],axis = 0)))
     
 if __name__ == '__main__':
     """main function for command line utility, won't usually be used

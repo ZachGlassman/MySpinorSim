@@ -55,13 +55,13 @@ init_state_solver = 'coherent_state'
 propogate = 'Chebychev'
 species = 'Na'
 b_field = 37           #BField in microtesla
-n_tot = 40000            #TotalAtomNumber
+n_tot = 5000            #TotalAtomNumber
 mag = 0                 #Magnetization
-mag_range = 2           #MagRange
-atom_range = 2         #AtomRange
+mag_range = 0           #MagRange
+atom_range = 5         #AtomRange
 spinor_phase = 0.0      #SpinorPhase
-n_0 = n_tot-4             #N_0 numbers tarting in m=0
-c_init = 36            #C_init in Hz
+n_0 = n_tot-2            #N_0 numbers tarting in m=0
+c_init = 36/(np.pi)            #C_init in Hz
 filename = 'results.txt'
 
 eqz = 0.02768 * b_field**2
@@ -69,7 +69,8 @@ ndiv = 3
 delta_t= [0.01,0.001,0.01]
 #c = [36,36,36]
 c = [c_init,c_init,c_init]
-emw = [-2.5,-426,-2.5]
+#emw = [-2.5,-426,-2.5]
+emw = [0,0,0]
 n_step = [30,6,30]
 
 #now we want to allocate numpy array
@@ -157,13 +158,9 @@ for m in range(mag-mag_range,mag+mag_range+1):
                 for i in range(n_step[interval]):
                     t = t + dt
                     t_local_scaled += scaled_dt
-                    
-                    #debugging
-                    #file.write('before {0} {1} {2} {3} {4}\n'.format(i,q,atom_n,m,n_max))
                   
                     state = chebyshev_propagator(scaled_dt,state,n_max,e,d)
                     
-                    #file.write('####\n')
                     mean, mean_sq = moments(state,first_n0)
                     sum_of_meansq[t_step] += mean_sq
                     sum_of_means[t_step] += mean
@@ -219,3 +216,4 @@ sys.stdout.flush()
 print('Calculation Complete')
 print('Norm recovered', np.average(norm))
 print('Time for Calculation:', end-start)
+print('File written to:',filename)
