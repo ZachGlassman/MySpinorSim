@@ -54,23 +54,23 @@ start = timemod.time()
 init_state_solver = 'coherent_state'
 propogate = 'Chebychev'
 species = 'Na'
-b_field = 37           #BField in microtesla
+b_field = 0          #BField in microtesla
 n_tot = 5000            #TotalAtomNumber
 mag = 0                 #Magnetization
-mag_range = 0           #MagRange
-atom_range = 5         #AtomRange
-spinor_phase = 0.0      #SpinorPhase
-n_0 = n_tot-2            #N_0 numbers tarting in m=0
-c_init = 36/(np.pi)            #C_init in Hz
+mag_range = 4           #MagRange
+atom_range = 20         #AtomRange
+spinor_phase =0      #SpinorPhase
+n_0 = n_tot -2         #N_0 numbers tarting in m=0
+c_init = 24           #C_init in Hz
 filename = 'results.txt'
 
 eqz = 0.02768 * b_field**2
 ndiv = 3
-delta_t= [0.01,0.001,0.01]
+delta_t= [0.04,0.001,0.04]
 #c = [36,36,36]
 c = [c_init,c_init,c_init]
 #emw = [-2.5,-426,-2.5]
-emw = [0,0,0]
+emw = [-5,-5,-5]
 n_step = [30,6,30]
 
 #now we want to allocate numpy array
@@ -112,7 +112,7 @@ for m in range(mag-mag_range,mag+mag_range+1):
             
             e_min,e_max,d,e,first_n0 = setup_scaled_H(eqz + emw[0],c[0],atom_n,m,n_max)
             
-            state = np.zeros(n_max, dtype = complex)
+            state = np.zeros(int(n_max), dtype = complex)
             sum_coef = 0
             
             #sensible bounds

@@ -205,7 +205,7 @@ def create_pulse_arrays(tf,dt,ps,pd,pt,pa):
         for i in range(len(ps)):
             #apply pulse
             t.append(np.linspace(ps[i],ps[i]+pd[i],
-                                 int(pd[i]/(dt*1e-3)),
+                                 int(pd[i]/(dt*.1)),
                                  endpoint=False))
             #now apply spinor evolution
             start = ps[i]+pd[i]
@@ -239,7 +239,7 @@ def create_pulse_arrays(tf,dt,ps,pd,pt,pa):
          
         
         
-def single_simulation(N,nsamps,tfinal,dt,pulses,plot=True):
+def single_simulation(N,nsamps,c,tfinal,dt,pulses,plot=True,qu1=0):
     """main routine for integration
     problem is setup for arbitrary RF pulses
     pulse_dict
@@ -268,11 +268,12 @@ def single_simulation(N,nsamps,tfinal,dt,pulses,plot=True):
                                      
     
     B = 0.37  #Gauss
-    c = 36*2*np.pi
+    B = 0
+    c = c
     p1 = 0
     p0 = 0
     pm1 = 0
-    qu1 = 0
+    #qu1 = 0
     qu0 = 0
     qum1= qu1
     q1 = 276.8
@@ -286,19 +287,19 @@ def single_simulation(N,nsamps,tfinal,dt,pulses,plot=True):
     pars['p1'] = validate(p1,t)
     pars['p0'] = validate(p0,t)
     pars['pm1'] = validate(pm1,t)
-    pars['qu1'] = validate(qu1,t)
+    pars['qu1'] = validate_q(qu1,t_arr,pulse_seq)
     pars['qu0'] = validate(qu0,t)
-    pars['qum1'] = validate(qum1,t)
-    pars['q1'] = validate_q(q1,t_arr,pulse_seq)
+    pars['qum1'] = validate_q(qum1,t_arr,pulse_seq)
+    pars['q1'] = validate(q1,t)
     pars['q0'] = validate(q0,t)
-    pars['qm1'] = validate_q(qm1,t_arr,pulse_seq)
+    pars['qm1'] = validate(qm1,t)
     pars['c'] = validate(c,t)
     pars['t_arr'] = t_arr
     pars['pulses'] = pulse_seq
     #now start calculation
     start = time.time()
     states = generate_states(N,nsamps)
-    step_size = 20
+    step_size = 2
     ans = np.zeros((len(states),3,len(t[::step_size])))
     
     #do calculation
@@ -328,7 +329,7 @@ def single_simulation(N,nsamps,tfinal,dt,pulses,plot=True):
         plt.tight_layout()
         plt.show()
     
-    return np.vstack((t[::step_size],np.mean(ans[:,0],axis = 0)))
+    return np.vstack((t[::step_size],np.mean(ans[:,0],axis = 0),np.std(ans[:,0],axis=0)))
     
 if __name__ == '__main__':
     """main function for command line utility, won't usually be used

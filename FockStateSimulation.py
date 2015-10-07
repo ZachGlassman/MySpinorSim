@@ -183,7 +183,7 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c,plot=True):
             
     step_size = 50 #don't plot all data
     time = np.asarray([i * dt for i in range(0,num_steps,step_size)] )
-    tosave = np.vstack((time,n0[::step_size]))
+    tosave = np.vstack((time,n0[::step_size],n0var[::step_size]))
     np.savetxt('fockout.txt',tosave)
     if plot:
         fig, ax = plt.subplots(3,1)
@@ -209,12 +209,13 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c,plot=True):
 #############################################
 if __name__ == '__main__':
     simulation_params = {
-    'total_time': .05, #simulated time (s),
+    'total_time': .03, #simulated time (s),
     'mag_time':0.015,
-    'dt':0.002e-3, #simulation time step,
+    'dt':0.001e-4, #simulation time step,
     'tauB' : 1e-3,
-    'c':36,
-    'n_atoms':5000,
+    'c':36*2*np.pi,
+    'n_atoms':40000,
+    'plot':False
     }
     s = time.time()
     main(**simulation_params)
