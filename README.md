@@ -17,5 +17,5 @@ The Mean Field and Fock State simulations are set up in the same scheme as one a
 
 Parameter | Mean Field | Coherent
 ---|---|---
-c | 4 pi c |  c
-q | pi q | q
+$c$ | $4 \pi c$ |  $c$
+$q$ | $\pi q$ | $q$

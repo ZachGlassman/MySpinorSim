@@ -15,7 +15,7 @@ def setup_scaled_H(q, c, n, m, nmaxfinal):
  
     #create arrays
     e = np.zeros(int(nmax)-1)
-    d = np.zeros(int(nmax)
+    d = np.zeros(int(nmax))
   
     c_local = c/n
     

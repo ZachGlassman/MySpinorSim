@@ -68,7 +68,7 @@ def tri_ham(c,bfield,psi,n_atoms):
     ans = np.empty(len(psi), dtype = complex)
     #first for diagonal interation
     for i in range(len(psi)):
-        ans[i] = (i*(2*(n_atoms-2*i))-1)* c/n_atoms*psi[i] +2* bfield * i*psi[i]
+        ans[i] = (i*(2*(n_atoms-2*i))-1)* c/n_atoms*psi[i] + 2 * bfield * i*psi[i]
     #now for ineraction with kp = i-1
     for i in range(1,len(psi)):
         ans[i] += i * np.sqrt((n_atoms - 2 * (i-1) - 1)*(n_atoms - 2*(i-1)))*psi[i-1]* c/n_atoms
@@ -170,7 +170,8 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c,plot=True):
     n0var = np.zeros(num_steps)
     sxsqr = np.zeros(num_steps)
     qyzsqr = np.zeros(num_steps)
-    bf = 276.8* .37**2 #* 2*np.pi #q
+    bf = 276.8* .37**2 #q
+    bf = -5*np.pi
     #now evolve in time
     write_progress(0,num_steps)
     for i in range(num_steps):
@@ -181,7 +182,7 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c,plot=True):
         psi = ynplus1(func_to_integrate,psi,i*dt,dt,**params)
         write_progress(i + 1,num_steps)
             
-    step_size = 50 #don't plot all data
+    step_size = 30 #don't plot all data
     time = np.asarray([i * dt for i in range(0,num_steps,step_size)] )
     tosave = np.vstack((time,n0[::step_size],n0var[::step_size]))
     np.savetxt('fockout.txt',tosave)
