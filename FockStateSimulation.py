@@ -171,7 +171,7 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c,plot=True):
     sxsqr = np.zeros(num_steps)
     qyzsqr = np.zeros(num_steps)
     bf = 276.8* .37**2 #q
-    bf = -5*np.pi
+    bf = -5*np.pi*0
     #now evolve in time
     write_progress(0,num_steps)
     for i in range(num_steps):

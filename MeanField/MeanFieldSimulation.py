@@ -205,7 +205,7 @@ def create_pulse_arrays(tf,dt,ps,pd,pt,pa):
         for i in range(len(ps)):
             #apply pulse
             t.append(np.linspace(ps[i],ps[i]+pd[i],
-                                 int(pd[i]/(dt*.1)),
+                                 int(pd[i]/(dt*.01)),
                                  endpoint=False))
             #now apply spinor evolution
             start = ps[i]+pd[i]
@@ -329,7 +329,7 @@ def single_simulation(N,nsamps,c,tfinal,dt,pulses,plot=True,qu1=0):
         plt.tight_layout()
         plt.show()
     
-    return np.vstack((t[::step_size],np.mean(ans[:,0],axis = 0),np.std(ans[:,0],axis=0)))
+    return np.vstack((t[::step_size],np.mean(ans[:,0],axis = 0),np.std(ans[:,0],axis=0))),pars['qu1']
     
 if __name__ == '__main__':
     """main function for command line utility, won't usually be used
