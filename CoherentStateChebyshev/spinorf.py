@@ -55,10 +55,10 @@ init_state_solver = 'coherent_state'
 propogate = 'Chebychev'
 species = 'Na'
 b_field = 0          #BField in microtesla
-n_tot = 20000            #TotalAtomNumber
+n_tot = 10000            #TotalAtomNumber
 mag = 0                 #Magnetization
 mag_range = 2           #MagRange
-atom_range = 2         #AtomRange
+atom_range = 2        #AtomRange
 spinor_phase =0      #SpinorPhase
 n_0 = n_tot-2          #N_0 numbers tarting in m=0
 c_init = 24           #C_init in Hz

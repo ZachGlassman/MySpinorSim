@@ -1,12 +1,12 @@
-Species              = 23Na           
-B Field (muT)        = 0              
+Species              = Na             
+B Field (muT)        = 0.0            
 N_0                  = 9998           
 C_init               = 24             
 Total Atom Number    = 10000          
 Magnetization        = 0              
 Mag Range            = 4              
 Atom Range           = 5              
-Spinor Phase         = 0              
+Spinor Phase         = 0.0            
 Initial State Solver = coherent_state 
 Propogator           = Chebychev      
 

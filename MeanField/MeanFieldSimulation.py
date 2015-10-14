@@ -61,7 +61,11 @@ class Operator(object):
         
     def apply(self,ele):
         return np.dot(np.conj(ele), np.dot(self.mat,ele.T)).real
-        
+
+def find_phase(ele):
+    """find the phase theta_1+theta_-1-2theta_0"""
+    ans =  np.angle(ele)
+    return ans[0] + ans[2] - 2 * ans[1]
         
 def generate_states(N,s):
     """generate quasi probability distribution from Chapman paper"""
@@ -172,13 +176,18 @@ S_x = Operator(np.array([[0,1,0],[1,0,1],[0,1,0]])*1/np.sqrt(2),r'$S_x$')
 N_yz = Operator(1j/np.sqrt(2)* np.array([[0,-1,0],[1,0,1],[0,-1,0]]),r'$N_{yz}#')
 rho_0 = Operator(np.array([[0,0,0],[0,1,0],[0,0,0]]),r'$\rho_0$')
 
+
 def get_exp_values(sol,step_size):
     """function to compute expectation values"""
     r_0 = np.asarray([rho_0.apply(i) for i in sol[::step_size]])
     sx_calc = np.asarray([S_x.apply(i) for i in sol[::step_size]])
     nyz_calc = np.asarray([N_yz.apply(i) for i in sol[::step_size]])
-    return np.asarray([r_0, sx_calc, nyz_calc])
- 
+    phase = np.asarray([find_phase(i) for i in sol[::step_size]])
+    return np.asarray([r_0, sx_calc, nyz_calc,phase])
+
+###################################
+# Microwave Pulses
+###################################
 def create_pulse_arrays(tf,dt,ps,pd,pt,pa):
     """function to create time array from pulse durations
        returns another array with boolean values for integrate spinor
@@ -300,7 +309,7 @@ def single_simulation(N,nsamps,c,tfinal,dt,pulses,plot=True,qu1=0):
     start = time.time()
     states = generate_states(N,nsamps)
     step_size = 2
-    ans = np.zeros((len(states),3,len(t[::step_size])))
+    ans = np.zeros((len(states),4,len(t[::step_size])))
     
     #do calculation
     ll = len(states)
