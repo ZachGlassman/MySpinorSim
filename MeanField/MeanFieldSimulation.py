@@ -106,6 +106,7 @@ def solve_system(y0, B, p1, p0, pm1,qu1,qu0,qum1,q1,q0,qm1,c,t_arr,pulses):
             r.set_initial_value(y0,t[0])
             for tstep in range(len(t)-1):
                 #update the parameters
+                #NEED TO MAKE IT WITH ADAPTIVE TIME STEP
                 r.set_f_params(B[step],
                                p1[step],
                                p0[step],
@@ -183,7 +184,7 @@ def get_exp_values(sol,step_size):
     sx_calc = np.asarray([S_x.apply(i) for i in sol[::step_size]])
     nyz_calc = np.asarray([N_yz.apply(i) for i in sol[::step_size]])
     phase = np.asarray([find_phase(i) for i in sol[::step_size]])
-    return np.asarray([r_0, sx_calc, nyz_calc,phase])
+    return np.asarray([r_0, sx_calc, nyz_calc, phase])
 
 ###################################
 # Microwave Pulses
@@ -248,7 +249,7 @@ def create_pulse_arrays(tf,dt,ps,pd,pt,pa):
          
         
         
-def single_simulation(N,nsamps,c,tfinal,dt,pulses,plot=True,qu1=0):
+def single_simulation(N,nsamps,c,tfinal,dt,B,pulses,plot=True,qu1=0):
     """main routine for integration
     problem is setup for arbitrary RF pulses
     pulse_dict
@@ -276,8 +277,7 @@ def single_simulation(N,nsamps,c,tfinal,dt,pulses,plot=True,qu1=0):
                                      pulse_args)
                                      
     
-    B = 0.37  #Gauss
-    B = 0
+    B = B  #Gauss
     c = c
     p1 = 0
     p0 = 0
@@ -338,7 +338,7 @@ def single_simulation(N,nsamps,c,tfinal,dt,pulses,plot=True,qu1=0):
         plt.tight_layout()
         plt.show()
     
-    return np.vstack((t[::step_size],np.mean(ans[:,0],axis = 0),np.std(ans[:,0],axis=0))),pars['qu1']
+    return np.vstack((t[::step_size],m,s,np.mean(ans[:,3],axis=0))), pars['qu1']
     
 if __name__ == '__main__':
     """main function for command line utility, won't usually be used
