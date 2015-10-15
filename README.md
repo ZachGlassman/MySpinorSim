@@ -10,12 +10,12 @@ This is a full quantum evolution of a coherent state with a chebyshev time propo
 Full quantum evolution of Fock state with fourth order Runge-Kutta integration
 
 ## Mean Field
-Evolution of mean field equations with quasi-probability distribution to recover quantum statistics.  Multiple forms of ODE integration supported.
+Evolution of mean field equations with quasi-probability distribution to recover quantum statistics.  Multiple forms of ODE integration supported.  ODE integration uses an adaptive time-step to improve speed, decent quantum stastics for the normal experimental times we are concerned with (40k atoms, millisecond timescales) can be recovered in seconds (ensembles in the thousands).
 
 ## Comparisons
 The Mean Field and Fock State simulations are set up in the same scheme as one another.  However, the CoherentState propogation has some definition changes.  They are summed up in the following table
 
 Parameter | Mean Field | Coherent
 ---|---|---
-$c$ | $4 \pi c$ |  $c$
-$q$ | $\pi q$ | $q$
+c| 4 pi c |  c
+q | pi q | q

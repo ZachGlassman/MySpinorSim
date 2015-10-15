@@ -90,74 +90,86 @@ def generate_states(N,s):
     
     return states
 
+def get_q(qt,val,qu1,qu0,qum1):
+    if qt == '0':
+        return qu1,val,qum1
+    elif qt == '-1':
+        return qu1,qu0,val
+    elif qt == '1':
+        return val,qu0,qum1
+    else:
+        print('Improper Pulse specification, need component for micrwave pulse as string')
+    
 
-def solve_system(y0, B, p1, p0, pm1,qu1,qu0,qum1,q1,q0,qm1,c,t_arr,pulses):
+def solve_system(y0, B, p1, p0, pm1,qu1,qu0,qum1,q1,q0,qm1,c,pulses,tfinal):
     """solve the system by going through time and integrating the proper
     equations using the correct equation
     going in steps, for each step do proper integration"""
+    # create ode for both spinor evolution and rf evolution
     r = ode(f).set_integrator('zvode')
     e = ode(rf).set_integrator('zvode')
-    ans = np.zeros((len(B),3),dtype = complex)
-    ans[0] = y0
-    step = 1
-    for per, t in enumerate(t_arr):
-        y0 = ans[step-1]
-        if pulses[per]['spinor']:
-            r.set_initial_value(y0,t[0])
-            for tstep in range(len(t)-1):
-                #update the parameters
-                #NEED TO MAKE IT WITH ADAPTIVE TIME STEP
-                r.set_f_params(B[step],
-                               p1[step],
-                               p0[step],
-                               pm1[step],
-                               qu1[step],
-                               qu0[step],
-                               qum1[step],
-                               q1[step],
-                               q0[step],
-                               qm1[step],
-                               c[step])
-                ans[step] = np.asarray(r.integrate(t[tstep+1]))
-                step = step + 1
-            
-        else:
-            e.set_initial_value(y0,t[0])
-            e.set_f_params(1,1,1)
-            for tstep in range(len(t)-1):
-                #update the parameters
-                ans[step] = np.asarray(e.integrate(t[tstep+1]))
-                step = step + 1
-       
-        
-    return ans
-
-    
-def validate(par,t):
-    """function to validate arrays"""
-    lt = len(t)
-    if isinstance(par,float) or isinstance(par,int) or isinstance(par,np.complex):
-        return np.asarray([par for i in t])
-    elif len(par)==lt:
-        return par
-    else:
-        print('check array dimensions')
-
-def validate_q(par,t_arr, pulses):
-    """validate the q array for microwave pulses
-    assume q is set as scalar"""
+    t0 = 0
+    #now go through the pulse sequence and create timing information
+    #again assume they are ordered
+    p_start = [i[0] for i in pulses]
+    p_end = [i[1]+i[0] for i in pulses]
+    p_type = [i[2] for i in pulses]
+    p_args = [i[3:] for i in pulses]
+    #now build up step arrays, excpet for first and last time, all times are both start and end times
+    te = sorted(p_end + p_start+ [tfinal])
+    ts = sorted([0] + p_start + p_end)
+    #now interleave elements in each array
+    #now loop through the arrays, assume order is spinor,pulse,spinor....
+    #store data in list, don't know how to get arround this for adaptive integration
     ans = []
-    if len(pulses) == 1:
-        #list is empty, no pulses
-        return validate(par,np.hstack(t_arr))
-    else:
-        for i, t in enumerate(t_arr):
-            if pulses[i]['type'] == 'MW':
-                q = pulses[i]['other'][0]
-                ans.append(np.asarray([q for i in t]))
+    pulse = False
+    pulse_num = 0
+    #only care about end since we will start from the end of the previous integration
+    for  start, end in zip(ts,te):
+        #check if there is a pulse and if so, get information, then increment pulse_num
+        #then perform action
+        if pulse:
+            kind = p_type[pulse_num]
+            if kind == 'RF':
+                integrator = e
             else:
-                ans.append(np.asarray([par for i in t]))
-        return np.hstack(ans)
+                #must be a microwave pulse so change relevent parameters in integrator
+                # set initial parameters for spinor evolution
+                qt, val = p_args[pulse_num]
+                qu1n, qu0n, qum1n = get_q(qt,val,qu1,qu0,qum1)
+                r.set_f_params(B,p1,p0,pm1,qu1n,qu0n,qum1n,q1,q0,qm1,c)
+                integrator = r
+            pulse_num +=1
+            pulse = False
+        else:
+            #reset initial parameters for spinor evolution
+            r.set_f_params(B,p1,p0,pm1,qu1,qu0,qum1,q1,q0,qm1,c)
+            integrator = r
+            pulse = True
+        
+        #now actually integrate with adaptive timestep
+        #use new list for each evolution and only append at end for memory reasons
+        t = []
+        sol = []
+        integrator.set_initial_value(y0, start)
+        while integrator.successful() and integrator.t < end:
+            integrator.integrate(end, step = True)
+            #now only append if still less than what we want
+            if integrator.t < end:
+                t.append(integrator.t)
+                sol.append(integrator.y)
+        #reset intial values to last values for next iteration
+        y0 = integrator.y
+      
+        #append new solution to old one (this way we can keep track of pulses)
+        t = np.asarray([t])
+        sol = np.asarray(sol)
+        ans.append(np.concatenate((t.T,sol), axis = 1))
+   
+    return [np.vstack(ans)]
+        
+    
+   
 
 #fancy writeout
 def write_progress(step,total,string = 'Evolve'):
@@ -178,78 +190,19 @@ N_yz = Operator(1j/np.sqrt(2)* np.array([[0,-1,0],[1,0,1],[0,-1,0]]),r'$N_{yz}#'
 rho_0 = Operator(np.array([[0,0,0],[0,1,0],[0,0,0]]),r'$\rho_0$')
 
 
-def get_exp_values(sol,step_size):
+def get_exp_values(ans,step_size):
     """function to compute expectation values"""
-    r_0 = np.asarray([rho_0.apply(i) for i in sol[::step_size]])
-    sx_calc = np.asarray([S_x.apply(i) for i in sol[::step_size]])
-    nyz_calc = np.asarray([N_yz.apply(i) for i in sol[::step_size]])
-    phase = np.asarray([find_phase(i) for i in sol[::step_size]])
-    return np.asarray([r_0, sx_calc, nyz_calc, phase])
+    ans = ans[0]
+    sol = ans[:,1:]
+    r_0 = np.asarray([rho_0.apply(i) for i in sol[::step_size]]).real
+    sx_calc = np.asarray([S_x.apply(i) for i in sol[::step_size]]).real
+    nyz_calc = np.asarray([N_yz.apply(i) for i in sol[::step_size]]).real
+    phase = np.asarray([find_phase(i) for i in sol[::step_size]]).real
+    return np.asarray([ans[:,0][::step_size].real,r_0, sx_calc, nyz_calc, phase]), len(ans[:,0][::step_size])
 
-###################################
-# Microwave Pulses
-###################################
-def create_pulse_arrays(tf,dt,ps,pd,pt,pa):
-    """function to create time array from pulse durations
-       returns another array with boolean values for integrate spinor
-    """
-    if ps == None:
-        ans = {}
-        ans['spinor'] = True
-        ans['type'] = 'Free'
-        return [np.linspace(0, tf , int(tf/dt))],[ans]
-    elif len(ps) == 0:
-        ans = {}
-        ans['spinor'] = True
-        ans['type'] = 'Free'
-        return [np.linspace(0, tf , int(tf/dt))],[ans]
-    else:
-        #we have some pulses check if they are at beginning
-        #don't assume they are sorted, so sort with durations
-        ps, pd = (list(t) for t in zip(*sorted(zip(ps, pd))))
-        #build list of linspaces, then merge
-        t = []
-        #We will assume no pulse at beginnging (state is inialized)
-        #thus we need to alternate between spinor evolution and pulse
-        t.append(np.linspace(0,ps[0],int(ps[0]/dt),endpoint=False))
-        for i in range(len(ps)):
-            #apply pulse
-            t.append(np.linspace(ps[i],ps[i]+pd[i],
-                                 int(pd[i]/(dt*.01)),
-                                 endpoint=False))
-            #now apply spinor evolution
-            start = ps[i]+pd[i]
-            if (i+1) < len(ps):
-                end = ps[i+1]
-            else:
-                end = tf
-            t.append(np.linspace(start,end,int((end-start)/dt),endpoint=False))
-        #now go through and build pulse dictionary
-        pulse_info = []
-        spinor = True
-        pc = 0
-        for i in range(len(t)):
-            ans = {}
-            if spinor == True:
-                ans['spinor'] = True
-                ans['type'] = 'Free'
-                pulse_info.append(ans)
-                spinor = False
-            else:
-                ans['spinor'] = False
-                ans['type'] = pt[pc]
-                if ans['type'] != 'RF':
-                    ans['spinor'] = True
-                ans['other'] = pa[pc]
-                pulse_info.append(ans)
-                spinor = True
-                pc +=1
-        return t, pulse_info
-            
-         
-        
-        
-def single_simulation(N,nsamps,c,tfinal,dt,B,pulses,plot=True,qu1=0):
+
+
+def single_simulation(N,nsamps,c,tfinal,B,pulses,qu1=0):
     """main routine for integration
     problem is setup for arbitrary RF pulses
     pulse_dict
@@ -258,90 +211,66 @@ def single_simulation(N,nsamps,c,tfinal,dt,B,pulses,plot=True,qu1=0):
         
     for microwave pulse, just change q
     so we can just write that into the arrays
+    Pulse arrays must be ordered in time and not overlap!
     """
-    #define problem parameters
-    
-    pulse_start = [i[0] for i in pulses]
-    pulse_dur = [i[1] for i in pulses]
-    pulse_type = [i[2] for i in pulses]
-    pulse_args = [i[3:] for i in pulses]
-    if pulse_start != None:
-        if len(pulse_start) != len(pulse_dur):
-            print('Improper Pulse specification')
-            
-    t_arr,pulse_seq = create_pulse_arrays(tfinal,
-                                     dt,
-                                     pulse_start,
-                                     pulse_dur,
-                                     pulse_type,
-                                     pulse_args)
-                                     
-    
-    B = B  #Gauss
-    c = c
-    p1 = 0
-    p0 = 0
-    pm1 = 0
-    #qu1 = 0
-    qu0 = 0
-    qum1= qu1
-    q1 = 276.8
-    q0 = 0
-    qm1= q1
-
-    #generate array
-    t = np.hstack(t_arr)
+  
+    #set default paraameters assume they remain the same unless the pulses change them
     pars = {}
-    pars['B'] = validate(B,t)
-    pars['p1'] = validate(p1,t)
-    pars['p0'] = validate(p0,t)
-    pars['pm1'] = validate(pm1,t)
-    pars['qu1'] = validate_q(qu1,t_arr,pulse_seq)
-    pars['qu0'] = validate(qu0,t)
-    pars['qum1'] = validate_q(qum1,t_arr,pulse_seq)
-    pars['q1'] = validate(q1,t)
-    pars['q0'] = validate(q0,t)
-    pars['qm1'] = validate(qm1,t)
-    pars['c'] = validate(c,t)
-    pars['t_arr'] = t_arr
-    pars['pulses'] = pulse_seq
+    pars['B'] = B
+    pars['p1'] = 0
+    pars['p0'] = 0
+    pars['pm1'] = 0
+    pars['qu1'] = qu1
+    pars['qu0'] = 0
+    pars['qum1'] = qu1
+    pars['q1'] = 277
+    pars['q0'] = 0
+    pars['qm1'] = 277
+    pars['c'] = c
+    pars['pulses'] = pulses
+    pars['tfinal'] = tfinal
+    
     #now start calculation
     start = time.time()
     states = generate_states(N,nsamps)
-    step_size = 2
-    ans = np.zeros((len(states),4,len(t[::step_size])))
-    
+    step_size = 1
+    ans_1 = []
     #do calculation
     ll = len(states)
+    ## we will also find the maximum number of timesteps
+    t_max = 0
+    t_index = 0
     for i,state in enumerate(states):
         write_progress(i+1,ll)
-        ans[i] = get_exp_values(solve_system(state,**pars),step_size)
+        vals, t_num = get_exp_values(solve_system(state,**pars),step_size)
+        ans_1.append(vals)
+        if t_num > t_max:
+            t_max = t_num
+            t_index = i
+    #now we needto loop through the states again and inerpolate
+    t_interp = ans_1[t_index][0]
+    #alot array for interpolation
+    ans = np.zeros((len(states),4,len(t_interp)))
+    for i, vals in enumerate(ans_1):
+        for j, row in enumerate(vals[1:]):
+            ans[i,j] = np.interp(t_interp,vals[0],row)
     end = time.time()
     print('\nCalculation Finished in time:','{:<.2f}'.format(end-start))
-
+   
     #output routine
     m = np.mean(ans[:,0],axis = 0)
     s = np.std(ans[:,0],axis = 0)
-    np.savetxt('meanout.txt',np.vstack((t[::step_size],np.mean(ans[:,0],axis = 0))))
-    
-    
-    if plot:
-        fig, ax = plt.subplots(3,1)
-        ax[0].plot(t[::step_size],m)
-        ax[0].fill_between(t[::step_size],m-s,m+s,facecolor='green',alpha=0.2)
-        sxval = np.mean(ans[:,1],axis =0)
-        qyzval = np.mean(ans[:,2],axis =0)
-        ax[1].plot(t[::step_size],sxval)
-        ax[2].plot(t[::step_size],qyzval)
-        ax[1].set_yscale('log')
-        ax[2].set_yscale('log')
-        plt.tight_layout()
-        plt.show()
-    
-    return np.vstack((t[::step_size],m,s,np.mean(ans[:,3],axis=0))), pars['qu1']
-    
+    #now compute the microwave pulses
+    return np.vstack((t_interp,m,s,np.mean(ans[:,3],axis=0)))
+   
 if __name__ == '__main__':
     """main function for command line utility, won't usually be used
     in this way
+    
+    mostly for testing purposes
     """
-    print('functionality not enabled at this time')
+    pulses1 = [[.04,.001,'MW','0',-426*np.pi]]
+    nop = []
+    N=10000
+    tf = .1
+    data= single_simulation(N,1,24*np.pi*4,tf,.1,pulses1,qu1=0)
