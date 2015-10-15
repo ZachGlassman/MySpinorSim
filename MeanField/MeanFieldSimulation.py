@@ -35,8 +35,10 @@ def f(t,y,B,p1,p0,pm1,qu1,qu0,qum1,q1,q0,qm1,c):
     
 def rf(t,y,sigma,dm,dp):
     """rf ode
+    We will use the optical Bloch equations
     dp/dm = omega_b - Delta pm delta
-    where omega_b is field frequency
+    sigma is rabi frequency
+    where omega_b is field frequency frequency
     Delta = 1/2 mu_b B_z
     delta = detuning
     
@@ -105,10 +107,6 @@ def solve_system(y0, B, p1, p0, pm1,qu1,qu0,qum1,q1,q0,qm1,c,pulses,tfinal):
     """solve the system by going through time and integrating the proper
     equations using the correct equation
     going in steps, for each step do proper integration"""
-    # create ode for both spinor evolution and rf evolution
-    r = ode(f).set_integrator('zvode')
-    e = ode(rf).set_integrator('zvode')
-    t0 = 0
     #now go through the pulse sequence and create timing information
     #again assume they are ordered
     p_start = [i[0] for i in pulses]
@@ -125,26 +123,30 @@ def solve_system(y0, B, p1, p0, pm1,qu1,qu0,qum1,q1,q0,qm1,c,pulses,tfinal):
     pulse = False
     pulse_num = 0
     #only care about end since we will start from the end of the previous integration
+    #we will create new integrator for each time (necessary since it calls old fortran)
     for  start, end in zip(ts,te):
         #check if there is a pulse and if so, get information, then increment pulse_num
         #then perform action
         if pulse:
             kind = p_type[pulse_num]
             if kind == 'RF':
-                integrator = e
+                integrator = ode(rf).set_integrator('zvode')
+                sigma,dm,dp = p_args[pulse_nu]
+                integrator.set_f_params(sigma,dm,dp)
             else:
                 #must be a microwave pulse so change relevent parameters in integrator
                 # set initial parameters for spinor evolution
                 qt, val = p_args[pulse_num]
                 qu1n, qu0n, qum1n = get_q(qt,val,qu1,qu0,qum1)
-                r.set_f_params(B,p1,p0,pm1,qu1n,qu0n,qum1n,q1,q0,qm1,c)
-                integrator = r
+                
+                integrator = ode(f).set_integrator('zvode')
+                integrator.set_f_params(B,p1,p0,pm1,qu1n,qu0n,qum1n,q1,q0,qm1,c)
             pulse_num +=1
             pulse = False
         else:
             #reset initial parameters for spinor evolution
-            r.set_f_params(B,p1,p0,pm1,qu1,qu0,qum1,q1,q0,qm1,c)
-            integrator = r
+            integrator = ode(f).set_integrator('zvode')
+            integrator.set_f_params(B,p1,p0,pm1,qu1,qu0,qum1,q1,q0,qm1,c)
             pulse = True
         
         #now actually integrate with adaptive timestep
@@ -165,7 +167,8 @@ def solve_system(y0, B, p1, p0, pm1,qu1,qu0,qum1,q1,q0,qm1,c,pulses,tfinal):
         t = np.asarray([t])
         sol = np.asarray(sol)
         ans.append(np.concatenate((t.T,sol), axis = 1))
-   
+        #delete integrator so we don't pollute global variable namespace
+        del integrator
     return [np.vstack(ans)]
         
     
@@ -202,7 +205,7 @@ def get_exp_values(ans,step_size):
 
 
 
-def single_simulation(N,nsamps,c,tfinal,B,pulses,qu1=0):
+def single_simulation(N,nsamps,c,tfinal,B,pulses,qu0=0):
     """main routine for integration
     problem is setup for arbitrary RF pulses
     pulse_dict
@@ -220,9 +223,9 @@ def single_simulation(N,nsamps,c,tfinal,B,pulses,qu1=0):
     pars['p1'] = 0
     pars['p0'] = 0
     pars['pm1'] = 0
-    pars['qu1'] = qu1
-    pars['qu0'] = 0
-    pars['qum1'] = qu1
+    pars['qu1'] = 0
+    pars['qu0'] = qu0
+    pars['qum1'] = 0
     pars['q1'] = 277
     pars['q0'] = 0
     pars['qm1'] = 277
