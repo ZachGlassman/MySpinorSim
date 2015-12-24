@@ -17,6 +17,7 @@ from scipy.integrate import ode
 from numpy.lib import scimath
 import sys
 import time
+from tqdm import tqdm
 
 #first define the system dy/dt = f(y,t)
 def msqr(x):
@@ -172,19 +173,6 @@ def solve_system(y0, B, p1, p0, pm1,qu1,qu0,qum1,q1,q0,qm1,c,pulses,tfinal):
     return [np.vstack(ans)]
         
     
-   
-
-#fancy writeout
-def write_progress(step,total,string = 'Evolve'):
-    """write the progress out to the window"""
-    perc_done = step/(total) * 100
-    #50 character string always
-    num_marks = int(.5 * perc_done)
-    out = ''.join('#' for i in range(num_marks))
-    out = out + ''.join(' ' for i in range(50 - num_marks))
-    sys.stdout.write('\r[{0}]{1:>2.0f}% {2}'.format(out,perc_done,string))
-    sys.stdout.flush()
-    
 ###################################
 # Operator Definitions
 ###################################
@@ -243,13 +231,16 @@ def single_simulation(N,nsamps,c,tfinal,B,pulses,qu0=0):
     ## we will also find the maximum number of timesteps
     t_max = 0
     t_index = 0
-    for i,state in enumerate(states):
-        write_progress(i+1,ll)
-        vals, t_num = get_exp_values(solve_system(state,**pars),step_size)
-        ans_1.append(vals)
-        if t_num > t_max:
-            t_max = t_num
-            t_index = i
+    with tqdm(total = len(states)) as pbar:
+        for i, state in enumerate(states):
+            vals, t_num = get_exp_values(solve_system(state,**pars),step_size)
+            ans_1.append(vals)
+            if t_num > t_max:
+                t_max = t_num
+                t_index = i
+            
+            pbar.update(1)
+            
     #now we needto loop through the states again and inerpolate
     t_interp = ans_1[t_index][0]
     #alot array for interpolation
@@ -276,4 +267,4 @@ if __name__ == '__main__':
     nop = []
     N=10000
     tf = .1
-    data= single_simulation(N,1,24*np.pi*4,tf,.1,pulses1,qu1=0)
+    data= single_simulation(N,100,24*np.pi*4,tf,.1,pulses1)
