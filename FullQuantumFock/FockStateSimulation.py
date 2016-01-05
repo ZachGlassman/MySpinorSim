@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from numba import autojit
 import sys
 import time
+from tqdm import trange
 ##########################
 #Define Runge-Kutta method
 ##########################
@@ -107,18 +108,6 @@ def get_bfield(bfield,b_steps,step):
         ans =  0.21
     return 2*np.pi * 276.8 * ans**2*2
 
-
-#fancy writeout
-def write_progress(step,total):
-    #write out fancy
-    perc_done = step/(total) * 100
-    #50 character string always
-    num_marks = int(.5 * perc_done)
-    out = ''.join('#' for i in range(num_marks))
-    out = out + ''.join(' ' for i in range(50 - num_marks))
-    sys.stdout.write('\r[{0}]{1:>2.0f}%'.format(out,perc_done))
-    sys.stdout.flush()
-
 ################################################
 #Calculate Expectation Values
 ################################################
@@ -172,14 +161,12 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
     qyzsqr = np.zeros(num_steps)
     bf = 276.8* bf**2 #q
     #now evolve in time
-    write_progress(0,num_steps)
-    for i in range(num_steps):
+    for i in trange(num_steps):
         n0[i],n0sqr[i],n0var[i]=calc_n0_vals(psi,n_atoms)
         sxsqr[i] = calc_sx_sqr(psi,n_atoms)
         qyzsqr[i] = calc_qyz_sqr(psi,n_atoms)
         params['bfield'] = bf
         psi = ynplus1(func_to_integrate,psi,i*dt,dt,**params)
-        write_progress(i + 1,num_steps)
 
     step_size = 30 #don't plot all data
     time = np.asarray([i * dt for i in range(0,num_steps,step_size)] )
@@ -201,7 +188,6 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
         plt.tight_layout()
         plt.show()
     '''
-    print('\n simulation complete')
     return tosave
 
 
