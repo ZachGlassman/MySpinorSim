@@ -34,12 +34,12 @@ def ynplus1(func, yn,t,dt,**kwargs):
 def heaviside(x):
     """heaviside step function"""
     return 0.5 * (np.sign(x) + 1)
-    
+
 def bcon(t):
     a = (2-0.210) * heaviside(2e-3 -t)
     b = (2-0.210)/2e-3 * heaviside(t)*heaviside(2e-3-t)*t
     return a-b + 0.210
-    
+
 def bzdot(Bz,t,tauB):
     return 1/tauB*(bcon(t)-Bz)
 
@@ -56,12 +56,12 @@ def calculate_magnetic_field(total_time,dt,tauB):
     for i in range(1,num_iter,1):
         Blist[i] = ynplus1(func,Blist[i-1],i*dt,dt)
     return Blist
-    
+
 #######################################################################
 #FOCK STATE
 #Vector is k[i] where [n-1,n0,n1] = [k-m1,N-2k+ml,k], k in (0,(N+ml)/2)
 #######################################################################
-    
+
 @autojit
 def tri_ham(c,bfield,psi,n_atoms):
     '''compute the tridiagonal hamiltonian for fock state'''
@@ -75,14 +75,14 @@ def tri_ham(c,bfield,psi,n_atoms):
     #now for kp = i +1
     for i in range(len(psi)-1):
         ans[i] += (i+1)*np.sqrt((n_atoms-2*(i+1)+1)*(n_atoms-2*(i+1)+2))*psi[i+1]* c/n_atoms
-        
+
     return ans
 
 #may need higher precision integration
 def func_to_integrate(yn,t,bfield,c,n_atoms):
     com =  tri_ham(c,bfield,yn,n_atoms)
     return np.complex(0,-1)*com
-    
+
 def set_up_simulation(total_time,dt,tauB,mag_time,c,n_atoms):
     num_steps = int(total_time/dt)
     #calculate B field
@@ -94,7 +94,7 @@ def set_up_simulation(total_time,dt,tauB,mag_time,c,n_atoms):
     }
     b_steps = int(mag_time/dt)
     return params, num_steps,b_steps,b_field
-    
+
 def create_init_state(n_atoms):
     state = np.zeros(int(n_atoms/2)+1,dtype = complex)
     state[0]= np.complex(1,0)
@@ -106,8 +106,8 @@ def get_bfield(bfield,b_steps,step):
     else:
         ans =  0.21
     return 2*np.pi * 276.8 * ans**2*2
-  
-        
+
+
 #fancy writeout
 def write_progress(step,total):
     #write out fancy
@@ -143,7 +143,7 @@ def calc_sx_sqr(psi,n):
     for i in range(1,len(psi)):
         ans += (i+1)*np.sqrt((n-2*i)*(n-2*i-1))*np.abs(psi[i]*psi[i-1])
     return ans
-    
+
 @autojit
 def calc_qyz_sqr(psi,n):
     ans = 0
@@ -155,23 +155,22 @@ def calc_qyz_sqr(psi,n):
     for i in range(1,len(psi)):
         ans += -(i+1)*np.sqrt((n-2*i)*(n-2*i-1))*np.abs(psi[i]*psi[i-1])
     return ans
-        
+
 ###############################################
 # main routine
 ###############################################
-def main(total_time,dt,mag_time,tauB,n_atoms,c,plot=True):
+def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
     params,num_steps,b_steps,b_field = set_up_simulation(total_time,
                                                 dt,tauB,mag_time,c,n_atoms)
-                                                                             
+
     psi = create_init_state(n_atoms) # create initial state
-    
+
     n0 = np.zeros(num_steps)
     n0sqr = np.zeros(num_steps)
     n0var = np.zeros(num_steps)
     sxsqr = np.zeros(num_steps)
     qyzsqr = np.zeros(num_steps)
-    bf = 276.8* .37**2 #q
-    bf = -5*np.pi*0
+    bf = 276.8* bf**2 #q
     #now evolve in time
     write_progress(0,num_steps)
     for i in range(num_steps):
@@ -181,11 +180,12 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c,plot=True):
         params['bfield'] = bf
         psi = ynplus1(func_to_integrate,psi,i*dt,dt,**params)
         write_progress(i + 1,num_steps)
-            
+
     step_size = 30 #don't plot all data
     time = np.asarray([i * dt for i in range(0,num_steps,step_size)] )
     tosave = np.vstack((time,n0[::step_size],n0var[::step_size]))
     np.savetxt('fockout.txt',tosave)
+    '''
     if plot:
         fig, ax = plt.subplots(3,1)
         ax[0].fill_between(time,n0[::step_size]-np.sqrt(n0var[::step_size]),
@@ -200,11 +200,11 @@ def main(total_time,dt,mag_time,tauB,n_atoms,c,plot=True):
         ax[2].set_yscale('log')
         plt.tight_layout()
         plt.show()
-    
+    '''
     print('\n simulation complete')
     return tosave
-        
-           
+
+
 #############################################
 # Simulation setup and program execution
 #############################################
@@ -216,10 +216,10 @@ if __name__ == '__main__':
     'tauB' : 1e-3,
     'c':36*2*np.pi,
     'n_atoms':40000,
-    'plot':False
+    'bf':.37
     }
     s = time.time()
-    main(**simulation_params)
+    fock_sim(**simulation_params)
     e = time.time()
     print('\n')
     print('Simulation time: {:5.2f}'.format(e-s))

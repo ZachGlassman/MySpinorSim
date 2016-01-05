@@ -1,5 +1,4 @@
-# MySpinorSim
-SpinorBecSimulation
+# SpinorBecSimulation
 
 This repository contains several codes for simulation of Spinor Bose Einstein Condenstates.  They draw heavily on codes written by the Chapman group (Georgia Tech), Schwettman group (Oklahoma), and Eite Tsienga (NIST).
 

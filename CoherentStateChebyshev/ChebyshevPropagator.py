@@ -7,7 +7,7 @@ This is will propgate a Hermition matrix with eigenvalues between -1 and 1
 """
 import numpy as np
 from scipy.special import jv
-from hamiltonian import hamiltonian_c
+from .hamiltonian import hamiltonian_c
 from numba import autojit
 #going to define better multiplication function
 
@@ -21,7 +21,7 @@ def dbesj(x, alpha, n):
     bessel_j = jv(k,x)
     #y = len([num for num in bessel_j if abs(num) < 1e-20])
     return bessel_j
- 
+
 @autojit
 def chebyshev_propagator(time_step, psi, n_tot, e, d):
     """propogate function with Chebyshev Propgation"""
@@ -33,7 +33,7 @@ def chebyshev_propagator(time_step, psi, n_tot, e, d):
     while X > epsilon:
         chebyshev_order = chebyshev_order + 10
         X = (Y/chebyshev_order)**chebyshev_order / np.sqrt(2*np.pi*chebyshev_order)
-    
+
     #now compute the Bessel function
     bessel_j = dbesj(time_step,0,chebyshev_order+1)
     #get the order of the polynomial, find index of first element less than epsilon
@@ -42,7 +42,7 @@ def chebyshev_propagator(time_step, psi, n_tot, e, d):
             break
     order = i + 2
     #print('Number of Chebyshev polynomials', order)
-    
+
     psi_minus1 = psi #make sure to copy over
     psi_0 = hamiltonian_c(n_tot,psi_minus1,e,d)
     phase = np.complex(0,-1)
@@ -57,8 +57,5 @@ def chebyshev_propagator(time_step, psi, n_tot, e, d):
         psi = np.add(psi, np.multiply(cx, psi_plus1))
         psi_minus1 = psi_0
         psi_0 = psi_plus1
-        
-    return psi
-    
 
-    
+    return psi
