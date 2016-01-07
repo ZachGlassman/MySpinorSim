@@ -251,8 +251,8 @@ def single_simulation(N,nsamps,c,tfinal,B,pulses,qu0=0):
     #output routine
     m = np.mean(ans[:,0],axis = 0)
     s = np.std(ans[:,0],axis = 0)
-    #now compute the microwave pulses
-    return np.vstack((t_interp,m,s,np.mean(ans[:,3],axis=0)))
+
+    return t_interp,m,s,np.mean(ans[:,3],axis=0)
 
 if __name__ == '__main__':
     """main function for command line utility, won't usually be used

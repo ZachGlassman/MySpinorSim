@@ -81,9 +81,10 @@ def write_out(filename, b_field, n_0, c_init, n_tot, mag, mag_range, atom_range,
             fp.write(outstring.format(t,mean,np.sqrt(meansq-mean*mean),norm[time_step]))
 
 def solve_system(b_field, n_tot,mag, mag_range, atom_range,spinor_phase, n_0,
-                 filename, ndiv, delta_t,c, emw, n_step):
+                 ndiv, delta_t,c, emw, n_step):
     """Solve coherent state"""
     #now we want to allocate numpy array
+    eqz = 0.02768 * b_field**2
     sum_of_means = np.zeros(sum(n_step)+1) #one for each time step
     sum_of_meansq = np.zeros(sum(n_step)+1)
     norm = np.zeros(sum(n_step)+1)
@@ -193,7 +194,7 @@ if __name__ == '__main__':
     c_init = 24           #C_init in Hz
     filename = 'results.txt'
 
-    eqz = 0.02768 * b_field**2
+
     ndiv = 3
     delta_t= [0.04,0.001,0.06]
     c = [c_init,c_init,c_init]
@@ -201,8 +202,7 @@ if __name__ == '__main__':
     n_step = [30,6,30]
     start = timemod.time()
     sum_of_means, sum_of_meansq, norm, time = solve_system(b_field,
-        n_tot,mag, mag_range, atom_range,spinor_phase, n_0,
-        filename, ndiv, delta_t,c, emw, n_step)
+        n_tot,mag, mag_range, atom_range,spinor_phase, n_0,ndiv, delta_t,c, emw, n_step)
     write_out(filename, b_field, n_0, c_init, n_tot, mag, mag_range, atom_range,
                   spinor_phase, init_state_solver, propogate, delta_t, emw, eqz,
                   c, n_step, sum_of_means, sum_of_meansq, norm, time)

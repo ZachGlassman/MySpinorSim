@@ -159,7 +159,7 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
     n0var = np.zeros(num_steps)
     sxsqr = np.zeros(num_steps)
     qyzsqr = np.zeros(num_steps)
-    bf = 276.8* bf**2 #q
+    bf = 277* bf**2 #q
     #now evolve in time
     for i in trange(num_steps):
         n0[i],n0sqr[i],n0var[i]=calc_n0_vals(psi,n_atoms)
@@ -170,8 +170,8 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
 
     step_size = 30 #don't plot all data
     time = np.asarray([i * dt for i in range(0,num_steps,step_size)] )
-    tosave = np.vstack((time,n0[::step_size],n0var[::step_size]))
-    np.savetxt('fockout.txt',tosave)
+    return time, n0[::step_size], n0var[::step_size]
+
     '''
     if plot:
         fig, ax = plt.subplots(3,1)
@@ -188,7 +188,6 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
         plt.tight_layout()
         plt.show()
     '''
-    return tosave
 
 
 #############################################

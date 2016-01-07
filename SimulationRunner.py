@@ -23,6 +23,7 @@ Fock State Full Quantum:
 Coherent State full Quantum:
     Number of Atoms
     magnetic field
+    magnetization
     magnetic_field range loop
     atom_range loop
     spinor_phase
@@ -42,6 +43,8 @@ from FullQuantumFock.FockStateSimulation import fock_sim
 from CoherentStateChebyshev.spinorf import solve_system as cheby_sim
 import numpy as np
 import matplotlib.pyplot as plt
+import time as time_mod
+import seaborn
 
 def color_text(text, color):
     """color text"""
@@ -50,11 +53,30 @@ def color_text(text, color):
     except:
         return text
 
+class SimulationResult(object):
+    """class to hold results so we can parse different simulation into
+    equivalent results"""
+    def __init__(self,time,rho_0,std,color, name):
+        self.t = time
+        self.rho = rho_0
+        self.std = std
+        self.name = name
+        self.col = color
+
+    def plot(self, ax):
+        """plot given axis ax"""
+        ax.fill_between(self.t,self.rho-self.std,self.rho+self.std, color = self.col, alpha = .2)
+        ax.plot(self.t, self.rho, label = self.name, color = self.col)
+
+    def print_information(self):
+        print(self.t)
+        print(self.rho)
+
 
 class Simulation(object):
     """Simulation Class is a simulation for a certain set of parameters
     Will automatically use correct factors to compare to real vales"""
-    def __init__(self, name):
+    def __init__(self, name, pulses = [],number = False):
         """Inititalize name and all possible parameters set to reasonable values"""
         self.name = name
         self.params = {
@@ -66,48 +88,96 @@ class Simulation(object):
             'mag_range': 20,
             'spinor_phase':0,
             'n_0':4998,
-            'time_step': 0.001e-4,
+            'time_step': 0.001e-3,
             'tauB':1e-3,
             'total_time':.01,
             'mag_time':0.015,
+            'mag':0,
         }
-        self.pulses = []
+        self.pulses = pulses
+        self.number = number
+
         self.fock = False
         self.mean = False
         self.cheby = False
 
-    def run_fock(self):
+    def run_fock(self, verbose = True):
         """run a fock simulation with the current parameters"""
-        print(color_text('Running Fock State Simulation', 'CYAN'))
-        fock_sim(self.params['total_time'],
+        if verbose:
+            print(color_text('Running Fock State Simulation', 'CYAN'))
+            ts = time_mod.time()
+        time, n0, n0var = fock_sim(self.params['total_time'],
                 self.params['time_step'],
                 self.params['mag_time'],
                 self.params['tauB'],
                 self.params['N'],
-                self.params['c'],
+                self.params['c']*4*np.pi,
                 self.params['magnetic_field']/100)
+        std = np.sqrt(n0var)
+        if not self.number:
+            n0 = n0/self.params['N']
+            std= std/self.params['N']
+        self.fock_res = SimulationResult(time, n0, std, 'red','Fock')
+        print(np.sqrt(n0var))
         self.fock = True
-        print(color_text('Finished Fock State Simulation', 'RED'))
+        if verbose:
+            te = time_mod.time()
+            print(color_text('Finished Fock State Simulation', 'RED'))
+            print('Execution Time: {0:>4.2f}'.format(te-ts))
 
-    def run_mean(self):
+
+    def run_mean(self, verbose = True):
         """run a mean field simulation with the current parameters"""
-        print(color_text('Running Mean Field Simulation', 'YELLOW'))
-        c = self.params['c'] * 4 * np.pi
-        B = self.params['magnetic_field']
-        mean_sim(self.params['N'],
+        if verbose:
+            print(color_text('Running Mean Field Simulation', 'YELLOW'))
+            ts = time_mod.time()
+        time, mean, std, mw = self.mean_res = mean_sim(self.params['N'],
                  self.params['n_samps'],
-                 c,
+                 self.params['c'] * 4 * np.pi,
                  self.params['total_time'],
-                 B,
+                 self.params['magnetic_field'],
                  self.pulses,qu0=0)
+        if self.number:
+            mean = mean * self.params['N']
+            std = std * self.params['N']
+        self.mean_res = SimulationResult(time, mean, std, 'blue','Mean')
         self.mean = True
-        print(color_text('Finished Mean Field Simulation', 'RED'))
+        if verbose:
+            te = time_mod.time()
+            print(color_text('Finished Mean Field Simulation', 'RED'))
+            print('Execution Time: {0:>4.2f}'.format(te-ts))
 
-    def run_cheby(self):
+    def run_cheby(self, verbose = True):
         """run a chebyshev simulation with the current paramters"""
-        print(color_text('Running Coherent Simulation', 'MAGENTA'))
+        if verbose:
+            print(color_text('Running Coherent Simulation', 'MAGENTA'))
+            ts = time_mod.time()
+        if self.pulses == []:
+            dt = 0.04
+            c = [self.params['c']]
+            emw = [0]
+            n_step = [int(self.params['total_time']/dt)]
+            ndiv = 1
+            delta_t = [dt]
+
+        self.cheby_res = cheby_sim(self.params['magnetic_field'],
+                  self.params['N'],
+                  self.params['mag'],
+                  self.params['mag_range'],
+                  self.params['atom_range'],
+                  self.params['spinor_phase'],
+                  self.params['n_0'],
+                  ndiv,
+                  delta_t,
+                  c,
+                  emw,
+                  n_step)
         self.cheby = True
-        print(color_text('Finished Coherent Simulation', 'RED'))
+        if verbose:
+            te = time_mod.time()
+            print(color_text('Finished Coherent Simulation', 'RED'))
+            print('Execution Time: {0:>4.2f}'.format(te-ts))
+
 
     def plot(self):
         if not self.fock and not self.mean and not self.cheby:
@@ -115,16 +185,32 @@ class Simulation(object):
         else:
             fig, ax = plt.subplots()
             if self.fock:
-                print('Did fock')
+                self.fock_res.plot(ax)
             if self.mean:
-                print('Did mean')
+                self.mean_res.plot(ax)
             if self.cheby:
                 print('did cheby')
+            plt.legend()
+            plt.savefig('testing.png')
+    def has_result(self):
+        if self.fock or self.mean or self.cheby:
+            return True
+        else:
+            return False
+
+    def reset(self):
+        self.cheby = False
+        self.mean = False
+        self.fock = False
+
 
 if __name__ == '__main__':
     s = Simulation('ha')
-    s.params['total_time'] = .001
+    s.params['total_time'] = .04
+    s.params['atom_range'] = 1
+    s.params['mag_range'] = 1
+    s.params['magnetic_field'] = .2
     s.run_fock()
     s.run_mean()
-    s.run_cheby()
+    #s.run_cheby()
     s.plot()

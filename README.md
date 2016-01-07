@@ -18,3 +18,8 @@ Parameter | Mean Field | Coherent
 ---|---|---
 c| 4 pi c |  c
 q | pi q | q
+
+# To DO
+* Make magnetic field into q
+* Make sure comparisons work
+* Create nice interface
