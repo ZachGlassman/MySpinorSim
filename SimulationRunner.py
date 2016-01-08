@@ -81,13 +81,13 @@ class Simulation(object):
         self.name = name
         self.params = {
             'N':5000,
-            'c':30,
+            'c':24,
             'n_samps':200,
             'magnetic_field':27,
             'atom_range': 20,
             'mag_range': 20,
             'spinor_phase':0,
-            'n_0':4998,
+            'n_0':4990,
             'time_step': 0.001e-3,
             'tauB':1e-3,
             'total_time':.01,
@@ -112,13 +112,12 @@ class Simulation(object):
                 self.params['tauB'],
                 self.params['N'],
                 self.params['c']*4*np.pi,
-                self.params['magnetic_field']/100)
+                self.params['magnetic_field'])
         std = np.sqrt(n0var)
         if not self.number:
             n0 = n0/self.params['N']
             std= std/self.params['N']
         self.fock_res = SimulationResult(time, n0, std, 'red','Fock')
-        print(np.sqrt(n0var))
         self.fock = True
         if verbose:
             te = time_mod.time()
@@ -147,20 +146,20 @@ class Simulation(object):
             print(color_text('Finished Mean Field Simulation', 'RED'))
             print('Execution Time: {0:>4.2f}'.format(te-ts))
 
-    def run_cheby(self, verbose = True):
+    def run_cheby(self, verbose = True, save = False):
         """run a chebyshev simulation with the current paramters"""
         if verbose:
             print(color_text('Running Coherent Simulation', 'MAGENTA'))
             ts = time_mod.time()
         if self.pulses == []:
-            dt = 0.04
-            c = [self.params['c']]
+            dt = .005
+            c = [self.params['c']/(4*np.pi)]
             emw = [0]
             n_step = [int(self.params['total_time']/dt)]
             ndiv = 1
-            delta_t = [dt]
+            delta_t = [self.params['total_time']]
 
-        self.cheby_res = cheby_sim(self.params['magnetic_field'],
+        sum_of_means, sum_of_meansq, norm, time = cheby_sim(self.params['magnetic_field']*100,
                   self.params['N'],
                   self.params['mag'],
                   self.params['mag_range'],
@@ -172,15 +171,20 @@ class Simulation(object):
                   c,
                   emw,
                   n_step)
+        mean = sum_of_means/norm
+        meansq = sum_of_meansq/norm
+        std = np.sqrt(meansq - mean*mean)
         self.cheby = True
+        self.cheby_res = SimulationResult(time, mean,std, 'green', 'Coherent')
+
         if verbose:
             te = time_mod.time()
-            print(color_text('Finished Coherent Simulation', 'RED'))
+            print('\n',color_text('Finished Coherent Simulation', 'RED'))
             print('Execution Time: {0:>4.2f}'.format(te-ts))
 
 
     def plot(self):
-        if not self.fock and not self.mean and not self.cheby:
+        if not self._has_result:
             print('Cannot plot with no simulation')
         else:
             fig, ax = plt.subplots()
@@ -189,10 +193,18 @@ class Simulation(object):
             if self.mean:
                 self.mean_res.plot(ax)
             if self.cheby:
-                print('did cheby')
-            plt.legend()
-            plt.savefig('testing.png')
-    def has_result(self):
+                self.cheby_res.plot(ax)
+            ax.set_xlabel('t (s)')
+            if self.number:
+                ax.set_ylabel(r'$N_{m_F=0}$')
+            else:
+                ax.set_ylabel(r'$\rho_0$')
+            ax.legend()
+            print('Saving Figure')
+            plt.savefig('testing.pdf')
+
+
+    def _has_result(self):
         if self.fock or self.mean or self.cheby:
             return True
         else:
@@ -206,11 +218,13 @@ class Simulation(object):
 
 if __name__ == '__main__':
     s = Simulation('ha')
-    s.params['total_time'] = .04
-    s.params['atom_range'] = 1
-    s.params['mag_range'] = 1
-    s.params['magnetic_field'] = .2
+    s.params['total_time'] = .015
+    s.params['atom_range'] = 2
+    s.params['mag_range'] = 2
+    s.params['magnetic_field'] = 0#.3
+    s.params['n_samps']= 5000
+    s.number = True
+    s.run_cheby()
     s.run_fock()
     s.run_mean()
-    #s.run_cheby()
     s.plot()
