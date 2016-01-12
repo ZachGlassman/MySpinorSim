@@ -7,7 +7,10 @@ This is will propgate a Hermition matrix with eigenvalues between -1 and 1
 """
 import numpy as np
 from scipy.special import jv
-from .hamiltonian import hamiltonian_c
+try:
+    from .hamiltonian import hamiltonian_c
+except:
+    from hamiltonian import hamiltonian_c
 from numba import autojit
 #going to define better multiplication function
 

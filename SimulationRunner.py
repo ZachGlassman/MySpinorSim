@@ -132,7 +132,7 @@ class Simulation(object):
             ts = time_mod.time()
         time, mean, std, mw = self.mean_res = mean_sim(self.params['N'],
                  self.params['n_samps'],
-                 self.params['c'] * 4 * np.pi,
+                 self.params['c']*4*np.pi,
                  self.params['total_time'],
                  self.params['magnetic_field'],
                  self.pulses,qu0=0)
@@ -153,8 +153,8 @@ class Simulation(object):
             ts = time_mod.time()
         if self.pulses == []:
             dt = .005
-            c = [self.params['c']/(4*np.pi)]
-            emw = [0]
+            c = [self.params['c']]
+            emw = [.277/(np.pi)] #this is also q scaled by pi
             n_step = [int(self.params['total_time']/dt)]
             ndiv = 1
             delta_t = [self.params['total_time']]
@@ -218,7 +218,7 @@ class Simulation(object):
 
 if __name__ == '__main__':
     s = Simulation('ha')
-    s.params['total_time'] = .015
+    s.params['total_time'] = .2#.015
     s.params['atom_range'] = 2
     s.params['mag_range'] = 2
     s.params['magnetic_field'] = 0#.3
@@ -228,3 +228,4 @@ if __name__ == '__main__':
     s.run_fock()
     s.run_mean()
     s.plot()
+    plt.show()

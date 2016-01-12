@@ -16,7 +16,7 @@ from multiprocessing import Process, Queue
 def find_nmax(tot,m):
     first = np.mod(tot - abs(m),2)
     return (tot-abs(m)-first)/2+1
-    
+
 def alpha_help(a,n):
     """helper function, here a is alpha_ and n is n_"""
     if a.real == 0 and a.imag == 0:
@@ -24,13 +24,13 @@ def alpha_help(a,n):
             ln = np.complex(0,0)
         else:
             ln = np.complex(-1e200,0)
-            
+
     elif n >= 7:
         ln = n *np.log(a)- (n*np.log(n)-n + np.log(2*np.pi*n)/2)/2
     else:
         ln = n * np.log(a) - np.log(math.factorial(int(n)))/2
     return ln
- 
+
 @autojit
 def find_norm(z):
     """find complex norm^2 of a vector of complex numbers"""
@@ -43,7 +43,7 @@ def find_norm(z):
 def calc_m_loop(queue,m,params):
     """calculate for specific magnetization"""
     #uppack params dictionary, cant just do **params due to intricacy of call
-                
+
     n_tot = params['n_tot']
     atom_range = params['atom_range']
     emw = params['emw']
@@ -56,8 +56,8 @@ def calc_m_loop(queue,m,params):
     alpha_plus = params['alpha_plus']
     alpha_zero = params['alpha_zero']
     norm_factor = params['norm_factor']
-    
-   
+
+
     norm_for_m = 0
     # now declare local arrays, will be agreegated at end
     sum_of_means = np.zeros(sum(n_step)+1) #one for each time step
@@ -68,12 +68,12 @@ def calc_m_loop(queue,m,params):
     for atom_n in range(n_tot - atom_range, n_tot + atom_range +1):
         if atom_n >= abs(m):
             n_max = find_nmax(atom_n,m)
-            
+
             e_min,e_max,d,e,first_n0 = setup_scaled_H(eqz + emw[0],c[0],atom_n,m,n_max)
-            
+
             state = np.zeros(n_max, dtype = complex)
             sum_coef = 0
-            
+
             #now loop over j
             for j in range(int(n_max)):
                 n_zero_min = np.mod(atom_n - abs(m),2)
@@ -84,14 +84,14 @@ def calc_m_loop(queue,m,params):
                     ln_minus = alpha_help(alpha_minus,n_minus)
                     ln_plus = alpha_help(alpha_plus, n_plus)
                     ln_zero = alpha_help(alpha_zero,n_zero)
-                    
+
                     sum_ln = ln_minus + ln_plus + ln_zero
-                    
+
                     ln_coef = sum_ln - norm_factor
                     state[j] = np.exp(ln_coef)
                 else:
                     state[j] = np.complex(0,0)
-              
+
             #now do timestep loop
             t = 0
             t_step = 0
@@ -129,15 +129,15 @@ def main():
     propogate = 'Chebychev'
     species = 'Na'
     b_field = 0.0           #BField
-    n_tot = 10000           #TotalAtomNumber
+    n_tot = 5000           #TotalAtomNumber
     mag = 0                 #Magnetization
-    mag_range = 7           #MagRange
-    atom_range = 50         #AtomRange
+    mag_range = 5          #MagRange
+    atom_range = 5         #AtomRange
     spinor_phase = 0.0      #SpinorPhase
     n_0 = n_tot - 2         #N_0 numbers tarting in m=0
     c_init = 24             #C_init in Hz
-    
-    
+
+
     eqz = 0.02768 * b_field**2
     ndiv = 3
     delta_t= [0.04,0.001,0.04]
@@ -146,32 +146,32 @@ def main():
     emw = [-2.5,-426,-2.5]
     emw = [0,0,0]
     n_step = [30,6,30]
-    
+
     #now we want to allocate numpy array
     num_par = 2 * mag_range+1
     sum_of_means = np.zeros((num_par,sum(n_step)+1)) #one for each time step
     sum_of_meansq = np.zeros((num_par,sum(n_step)+1))
     norm = np.zeros((num_par,sum(n_step)+1))
     time = np.zeros((num_par,sum(n_step)+1))
-    
-    
+
+
     #density = np.zeros(sum(n_step) * int(n_tot)+atom_range+1)
-    
+
     if n_0 < 1e-20:
         alpha_zero =  np.complex(0,0)
     else:
         alpha_zero = np.sqrt(n_0)*np.exp(np.complex(0,spinor_phase/2))
-        
+
     if (n_tot - n_0 + mag) < 1e-20:
         alpha_plus = np.complex(0,0)
     else:
         alpha_plus = np.complex(np.sqrt(mag+(n_tot-n_0-mag)/2),0)
-    
+
     if (n_tot - n_0 - mag) < 1e-20:
         alpha_minus = np.complex(0,0)
     else:
         alpha_minus = np.complex(np.sqrt((n_tot-n_0-mag)/2),0)
-        
+
     #calculate normalization factor
     norm_factor = (abs(alpha_minus)**2 + abs(alpha_zero)**2 + abs(alpha_plus)**2)/2
 
@@ -198,8 +198,8 @@ def main():
         k = m - (mag-mag_range)
         procs[k] = Process(target = calc_m_loop, args = (queue, m, params))
         procs[k].start()
-       
-    
+
+
     #get the results
     for m in range(mag-mag_range,mag+mag_range+1):
         k = m - (mag-mag_range)
@@ -208,13 +208,13 @@ def main():
         sum_of_means[k] = ans[1]
         sum_of_meansq[k] = ans[2]
         norm[k] = ans[3]
-        
+
     #sum the results
     time = time[0]
     sum_of_means = np.sum(sum_of_means, axis = 0)
     sum_of_meansq = np.sum(sum_of_meansq, axis = 0)
     norm = np.sum(norm, axis =0)
-    
+
     outstring1 = '{:<15}{:<15}{:<15}{:<15}\n'
     outstring = '{:<15.6e}{:<15.6e}{:<15.6e}{:<15.6e}\n'
     infostring = '{:<20} = {:<15}\n'
@@ -245,7 +245,7 @@ def main():
                                                       n_step[i]))
         fp.write('\n')
         fp.write(outstring1.format('t(s)','mean','stddev','norm'))
-    
+
         for time_step in range(len(sum_of_means)):
             t = time[time_step]
             mean = sum_of_means[time_step]/norm[time_step]
@@ -253,7 +253,7 @@ def main():
             fp.write(outstring.format(t,mean,np.sqrt(meansq-mean*mean),norm[time_step]))
     print('Calculation Complete')
     print('Norm recovered', np.average(norm))
-    
+
 
 if __name__=='__main__':
     start = timemod.time()
