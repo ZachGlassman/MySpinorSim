@@ -87,7 +87,7 @@ class Simulation(object):
             'atom_range': 20,
             'mag_range': 20,
             'spinor_phase':0,
-            'n_0':4990,
+            'n_0':4998,
             'time_step': 0.001e-3,
             'tauB':1e-3,
             'total_time':.01,
@@ -217,15 +217,20 @@ class Simulation(object):
 
 
 if __name__ == '__main__':
+    ts = time_mod.time()
     s = Simulation('ha')
     s.params['total_time'] = .2#.015
-    s.params['atom_range'] = 2
-    s.params['mag_range'] = 2
+    s.params['atom_range'] = 0
+    s.params['mag_range'] = 0
     s.params['magnetic_field'] = 0#.3
     s.params['n_samps']= 5000
     s.number = True
     s.run_cheby()
-    s.run_fock()
+    #s.run_fock()
     s.run_mean()
     s.plot()
+    te = time_mod.time()
+    mins, secs = divmod(te-ts, 60)
+    hours, mins = divmod(mins, 60)
+    print('Total Sim Time {0:02.0f}h:{1:02.0f}m:{2:02.2f}s'.format(hours,mins,secs))
     plt.show()
