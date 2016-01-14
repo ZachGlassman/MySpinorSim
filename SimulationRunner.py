@@ -2,7 +2,7 @@
 """
 Simulation Runner - This is a module containing a unified interface
 into the 3 simulation types written.  It should be the primary way to interact
-with the simulation codes.  It will allow easy comparison of results
+with the simulation codes.  It will allow easy comparison of results.
 
 Three types of codes and requirements
 Mean Field:
@@ -45,6 +45,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time as time_mod
 import seaborn
+import configparser
+import argparse
 
 def color_text(text, color):
     """color text"""
@@ -52,6 +54,7 @@ def color_text(text, color):
         return getattr(colorama.Fore,color) + text + colorama.Style.RESET_ALL
     except:
         return text
+
 
 class SimulationResult(object):
     """class to hold results so we can parse different simulation into
@@ -76,23 +79,23 @@ class SimulationResult(object):
 class Simulation(object):
     """Simulation Class is a simulation for a certain set of parameters
     Will automatically use correct factors to compare to real vales"""
-    def __init__(self, name, pulses = [],number = False):
+    def __init__(self, name, pulses = [], number = False):
         """Inititalize name and all possible parameters set to reasonable values"""
         self.name = name
         self.params = {
-            'N':5000,
-            'c':24,
-            'n_samps':200,
-            'magnetic_field':27,
+            'N': 5000,
+            'c': 24,
+            'n_samps': 200,
+            'magnetic_field': 27,
             'atom_range': 20,
             'mag_range': 20,
-            'spinor_phase':0,
-            'n_0':4998,
+            'spinor_phase': 0,
+            'n_0': 4998,
             'time_step': 0.001e-3,
-            'tauB':1e-3,
-            'total_time':.01,
-            'mag_time':0.015,
-            'mag':0,
+            'tauB': 1e-3,
+            'total_time': .01,
+            'mag_time': 0.015,
+            'mag': 0,
         }
         self.pulses = pulses
         self.number = number
@@ -100,17 +103,18 @@ class Simulation(object):
         self.fock = False
         self.mean = False
         self.cheby = False
+        self.verbose = False
 
-    def run_fock(self, verbose = True):
+    def run_fock(self):
         """run a fock simulation with the current parameters"""
-        if verbose:
+        if self.verbose:
             print(color_text('Running Fock State Simulation', 'CYAN'))
             ts = time_mod.time()
         time, n0, n0var = fock_sim(self.params['total_time'],
                 self.params['time_step'],
                 self.params['mag_time'],
                 self.params['tauB'],
-                self.params['N'],
+                int(self.params['N']),
                 self.params['c']*4*np.pi,
                 self.params['magnetic_field'])
         std = np.sqrt(n0var)
@@ -119,19 +123,19 @@ class Simulation(object):
             std= std/self.params['N']
         self.fock_res = SimulationResult(time, n0, std, 'red','Fock')
         self.fock = True
-        if verbose:
+        if self.verbose:
             te = time_mod.time()
             print(color_text('Finished Fock State Simulation', 'RED'))
             print('Execution Time: {0:>4.2f}'.format(te-ts))
 
 
-    def run_mean(self, verbose = True):
+    def run_mean(self):
         """run a mean field simulation with the current parameters"""
-        if verbose:
+        if self.verbose:
             print(color_text('Running Mean Field Simulation', 'YELLOW'))
             ts = time_mod.time()
-        time, mean, std, mw = self.mean_res = mean_sim(self.params['N'],
-                 self.params['n_samps'],
+        time, mean, std, mw = self.mean_res = mean_sim(int(self.params['N']),
+                 int(self.params['n_samps']),
                  self.params['c']*4*np.pi,
                  self.params['total_time'],
                  self.params['magnetic_field'],
@@ -141,14 +145,14 @@ class Simulation(object):
             std = std * self.params['N']
         self.mean_res = SimulationResult(time, mean, std, 'blue','Mean')
         self.mean = True
-        if verbose:
+        if self.verbose:
             te = time_mod.time()
             print(color_text('Finished Mean Field Simulation', 'RED'))
             print('Execution Time: {0:>4.2f}'.format(te-ts))
 
-    def run_cheby(self, verbose = True, save = False):
+    def run_cheby(self,save = False):
         """run a chebyshev simulation with the current paramters"""
-        if verbose:
+        if self.verbose:
             print(color_text('Running Coherent Simulation', 'MAGENTA'))
             ts = time_mod.time()
         if self.pulses == []:
@@ -160,12 +164,12 @@ class Simulation(object):
             delta_t = [self.params['total_time']]
 
         sum_of_means, sum_of_meansq, norm, time = cheby_sim(self.params['magnetic_field']*100,
-                  self.params['N'],
-                  self.params['mag'],
-                  self.params['mag_range'],
-                  self.params['atom_range'],
+                  int(self.params['N']),
+                  int(self.params['mag']),
+                  int(self.params['mag_range']),
+                  int(self.params['atom_range']),
                   self.params['spinor_phase'],
-                  self.params['n_0'],
+                  int(self.params['n_0']),
                   ndiv,
                   delta_t,
                   c,
@@ -177,7 +181,7 @@ class Simulation(object):
         self.cheby = True
         self.cheby_res = SimulationResult(time, mean,std, 'green', 'Coherent')
 
-        if verbose:
+        if self.verbose:
             te = time_mod.time()
             print('\n',color_text('Finished Coherent Simulation', 'RED'))
             print('Execution Time: {0:>4.2f}'.format(te-ts))
@@ -200,8 +204,7 @@ class Simulation(object):
             else:
                 ax.set_ylabel(r'$\rho_0$')
             ax.legend()
-            print('Saving Figure')
-            plt.savefig('testing.pdf')
+
 
 
     def _has_result(self):
@@ -215,22 +218,61 @@ class Simulation(object):
         self.mean = False
         self.fock = False
 
+def main(config,args):
+    #keys for configuarion file
+    sims = 'Simulation Settings'
+    gsp = 'Global Simulation Parameters'
+    tw = 'TW Parameters'
+    fsp = 'Fock Simulation Parameters'
+    cscp = 'Coherent State Chebyshev Parameters'
+    #create simultion
+    s = Simulation(config[sims].get('Name','sim'))
+    if args.verbose == True:
+        s.verbose = True
+    #loop through each one
+    for con in [config[gsp],config[tw],config[fsp],config[cscp]]:
+        for key in con:
+            s.params[key] = float(con[key])
+            if args.verbose == True:
+                print('{0} set to {1}'.format(key,con[key]))
 
-if __name__ == '__main__':
+    #now run simulations
+    if args.verbose == True:
+        print(''.join('#' for i in range(20)))
+        print('Simulations Set Up - Starting Numerics')
     ts = time_mod.time()
-    s = Simulation('ha')
-    s.params['total_time'] = .2#.015
-    s.params['atom_range'] = 0
-    s.params['mag_range'] = 0
-    s.params['magnetic_field'] = 0#.3
-    s.params['n_samps']= 5000
     s.number = True
-    s.run_cheby()
-    #s.run_fock()
-    s.run_mean()
-    s.plot()
+    if config[sims].getboolean('run_coherent', False):
+        s.run_cheby()
+    if config[sims].getboolean('run_fock', False):
+        s.run_fock()
+    if config[sims].getboolean('run_tw', False):
+        s.run_mean()
     te = time_mod.time()
-    mins, secs = divmod(te-ts, 60)
-    hours, mins = divmod(mins, 60)
-    print('Total Sim Time {0:02.0f}h:{1:02.0f}m:{2:02.2f}s'.format(hours,mins,secs))
-    plt.show()
+    if args.verbose == True:
+        mins, secs = divmod(te-ts, 60)
+        hours, mins = divmod(mins, 60)
+        print(''.join('#' for i in range(20)))
+        out_form = 'Total Sim Time {0:02.0f}h:{1:02.0f}m:{2:02.2f}s'
+        print(out_form.format(hours,mins,secs))
+
+    if config[sims].getboolean('plot',True):
+        s.plot()
+        print('Saving Figure','{0}_plot.pdf'.format(s.name))
+        plt.savefig('{0}_plot.pdf'.format(s.name))
+    if args.verbose == True:
+        print(''.join('#' for i in range(20)))
+    print('Simulation Complete')
+if __name__ == '__main__':
+    #add parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v',
+                       dest='verbose',
+                       action='store',
+                       default = True,
+                       help='verbose output (default True)')
+    args = parser.parse_args()
+    #get configuration
+    config = configparser.ConfigParser()
+    config.read('sim.config')
+    main(config, args)
