@@ -15,7 +15,7 @@ Evolution of mean field equations with quasi-probability distribution to recover
 ## Usage
 These codes are written in pure python with some just-in-time compilation schemes which should work on Windows, Linux, and MacOS.  The recommended python distribution is Anaconda or Miniconda, which can be obtained at [Anaconda](https://www.continuum.io/downloads) and [Miniconda](http://conda.pydata.org/miniconda.html) respectively.  The only difference in these packages is that Anaconda comes pre-installed with many common packages and miniconda has non, requiring the user to specify the packages.  Miniconda is the preferred method as it is much smaller.    Please download the latest Python 3 version (3.5 at the time of this writing).  The code will not run on python 2.
 
-During installation make sure to allow the installer to change the path variable.  Open a terminal or command prompt and type python.  If you enter a python terminal with the correct python version, you are all good to go.  
+During installation make sure to allow the installer to change the path variable.  Open a terminal or command prompt and type python.  If you enter a python terminal with the correct python version, you are all good to go.
 
 The code depends on a many python packages:
 
@@ -25,11 +25,12 @@ The code depends on a many python packages:
 * seaborn (fancy plotting)
 * numba (JIT compiler)
 * tqdm (progress indicator)
+* colorama (fancy colors)
 
 To install these use the following commands
 
 ```
-conda install numpy scipy matplotlib seaborn numba
+conda install numpy scipy matplotlib seaborn numba colorama
 
 pip install tqdm
 ```
@@ -68,7 +69,7 @@ n_0 = 4996
 mag= 0
 ```
 
-Remember **All** fields must be included in order to get a proper simulation.  The program will not necessarily crash, however, it may use default values instead.  Save this config file in the same directory as the `SimulationRunner.py` program.  
+Remember **All** fields must be included in order to get a proper simulation.  The program will not necessarily crash, however, it may use default values instead.  Save this config file in the same directory as the `SimulationRunner.py` program.
 
 To start a simulation, open a terminal or command prompt, navigate to the folder containing `SimulationRunner.py` and call
 ```

@@ -37,7 +37,8 @@ Coherent State full Quantum:
 It will provide a unified plotting interface and variable interface
 @author: Zachary Glassman
 """
-import colorama
+
+    
 from MeanField.MeanFieldSimulation import single_simulation as mean_sim
 from FullQuantumFock.FockStateSimulation import fock_sim
 from CoherentStateChebyshev.spinorf import solve_system as cheby_sim
@@ -49,7 +50,12 @@ import configparser
 import argparse
 
 def color_text(text, color):
-    """color text"""
+    """Function color text
+    :param data: text to color
+    :type data: string
+    :param color: color
+    :type color: string
+    """
     try:
         return getattr(colorama.Fore,color) + text + colorama.Style.RESET_ALL
     except:
