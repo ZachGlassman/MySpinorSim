@@ -271,8 +271,14 @@ if __name__ == '__main__':
                        action='store',
                        default = True,
                        help='verbose output (default True)')
+    parser.add_argument('-c',
+                        dest ='config',
+                        action = 'store',
+                        help = 'Path to config file',
+                        required = True)
     args = parser.parse_args()
     #get configuration
     config = configparser.ConfigParser()
-    config.read('sim.config')
+
+    config.read(args.config)
     main(config, args)
