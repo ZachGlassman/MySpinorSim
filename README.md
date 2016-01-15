@@ -34,6 +34,11 @@ conda install numpy scipy matplotlib seaborn numba
 pip install tqdm
 ```
 
+To aquire the code you can either download the code from this site, or if you have git, you can use the command
+```
+git clone https://github.com/ZachGlassman/SpinorBECSimulation.git
+```
+
 Now you are ready to run the simulations.  The entire simulation information is stored in a configuration file.  An example file with the necessary fields is:
 ```
 [Simulation Settings]
