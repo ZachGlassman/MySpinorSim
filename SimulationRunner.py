@@ -37,8 +37,8 @@ Coherent State full Quantum:
 It will provide a unified plotting interface and variable interface
 @author: Zachary Glassman
 """
-
-    
+import matplotlib
+matplotlib.use('Agg')
 from MeanField.MeanFieldSimulation import single_simulation as mean_sim
 from FullQuantumFock.FockStateSimulation import fock_sim
 from CoherentStateChebyshev.spinorf import solve_system as cheby_sim
@@ -77,6 +77,13 @@ class SimulationResult(object):
         ax.fill_between(self.t,self.rho-self.std,self.rho+self.std, color = self.col, alpha = .2)
         ax.plot(self.t, self.rho, label = self.name, color = self.col)
 
+    def save(self, stype):
+        """function to save results to file"""
+        with open('{0}_{1}_results.txt'.format(self.name,stype),'w') as f:
+            f.write('{0:10}{1:10}{2:10}\n'.format('Time','Mean','STD'))
+            for i, time in enumerate(self.t):
+                f.write('{:<10.3f}{:<10.3f}{:<10.3f}\n'.format(time,self.rho[i],self.std[i]))
+
     def print_information(self):
         print(self.t)
         print(self.rho)
@@ -89,7 +96,7 @@ class Simulation(object):
         """Inititalize name and all possible parameters set to reasonable values"""
         self.name = name
         self.params = {
-            'N': 5000,
+            'n': 5000,
             'c': 24,
             'n_samps': 200,
             'magnetic_field': 27,
@@ -120,13 +127,13 @@ class Simulation(object):
                 self.params['time_step'],
                 self.params['mag_time'],
                 self.params['tauB'],
-                int(self.params['N']),
-                self.params['c']*4*np.pi,
+                int(self.params['n']),
+                self.params['c']*2*np.pi,
                 self.params['magnetic_field'])
         std = np.sqrt(n0var)
         if not self.number:
-            n0 = n0/self.params['N']
-            std= std/self.params['N']
+            n0 = n0/self.params['n']
+            std= std/self.params['n']
         self.fock_res = SimulationResult(time, n0, std, 'red','Fock')
         self.fock = True
         if self.verbose:
@@ -140,15 +147,15 @@ class Simulation(object):
         if self.verbose:
             print(color_text('Running Mean Field Simulation', 'YELLOW'))
             ts = time_mod.time()
-        time, mean, std, mw = self.mean_res = mean_sim(int(self.params['N']),
+        time, mean, std, mw = self.mean_res = mean_sim(int(self.params['n']),
                  int(self.params['n_samps']),
-                 self.params['c']*4*np.pi,
-                 self.params['total_time'],
+                 self.params['c']*2*np.pi,
+                 self.params['total_time']+.05*self.params['total_time'],
                  self.params['magnetic_field'],
                  self.pulses,qu0=0)
         if self.number:
-            mean = mean * self.params['N']
-            std = std * self.params['N']
+            mean = mean * self.params['n']
+            std = std * self.params['n']
         self.mean_res = SimulationResult(time, mean, std, 'blue','Mean')
         self.mean = True
         if self.verbose:
@@ -162,7 +169,7 @@ class Simulation(object):
             print(color_text('Running Coherent Simulation', 'MAGENTA'))
             ts = time_mod.time()
         if self.pulses == []:
-            dt = .005
+            dt = .0005
             c = [self.params['c']]
             emw = [.277/(np.pi)] #this is also q scaled by pi
             n_step = [int(self.params['total_time']/dt)]
@@ -170,7 +177,7 @@ class Simulation(object):
             delta_t = [self.params['total_time']]
 
         sum_of_means, sum_of_meansq, norm, time = cheby_sim(self.params['magnetic_field']*100,
-                  int(self.params['N']),
+                  int(self.params['n']),
                   int(self.params['mag']),
                   int(self.params['mag_range']),
                   int(self.params['atom_range']),
@@ -219,28 +226,29 @@ class Simulation(object):
         else:
             return False
 
-    def reset(self):
+    def _reset(self):
         self.cheby = False
         self.mean = False
         self.fock = False
-
-def main(config,args):
+        
+def single_simulation(config, args):
     #keys for configuarion file
     sims = 'Simulation Settings'
     gsp = 'Global Simulation Parameters'
     tw = 'TW Parameters'
     fsp = 'Fock Simulation Parameters'
     cscp = 'Coherent State Chebyshev Parameters'
-    #create simultion
+    #create simulation objects
     s = Simulation(config[sims].get('Name','sim'))
     if args.verbose == True:
         s.verbose = True
     #loop through each one
+    print('Parameter Settings:')
     for con in [config[gsp],config[tw],config[fsp],config[cscp]]:
         for key in con:
             s.params[key] = float(con[key])
             if args.verbose == True:
-                print('{0} set to {1}'.format(key,con[key]))
+                print('  {0:<15} set to {1}'.format(key,con[key]))
 
     #now run simulations
     if args.verbose == True:
@@ -250,10 +258,16 @@ def main(config,args):
     s.number = True
     if config[sims].getboolean('run_coherent', False):
         s.run_cheby()
+        if config[sims].getboolean('save', False):
+            s.cheby_res.save('Cheby')
     if config[sims].getboolean('run_fock', False):
         s.run_fock()
+        if config[sims].getboolean('save', False):
+            s.fock_res.save('Fock')
     if config[sims].getboolean('run_tw', False):
         s.run_mean()
+        if config[sims].getboolean('save', False):
+            s.mean_res.save('TW')
     te = time_mod.time()
     if args.verbose == True:
         mins, secs = divmod(te-ts, 60)
@@ -266,9 +280,14 @@ def main(config,args):
         s.plot()
         print('Saving Figure','{0}_plot.pdf'.format(s.name))
         plt.savefig('{0}_plot.pdf'.format(s.name))
+        
     if args.verbose == True:
         print(''.join('#' for i in range(20)))
     print('Simulation Complete')
+
+def main(config,args):
+    single_simulation(config,args)
+    
 if __name__ == '__main__':
     #add parser
     parser = argparse.ArgumentParser()
@@ -285,6 +304,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     #get configuration
     config = configparser.ConfigParser()
-
     config.read(args.config)
     main(config, args)

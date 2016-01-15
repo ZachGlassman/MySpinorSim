@@ -83,7 +83,6 @@ The program also has another flag `-v` which can be set to false `-v False` if y
 
 
 # To DO
+* Easier support for small seeds
 * Add output support
 * Make magnetic field into q
-* Make sure comparisons work
-* Create nice interface
