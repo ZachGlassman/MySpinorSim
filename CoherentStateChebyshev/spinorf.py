@@ -84,7 +84,7 @@ def solve_system(b_field, n_tot,mag, mag_range, atom_range,spinor_phase, n_0,
                  ndiv, delta_t,c, emw, n_step):
     """Solve coherent state"""
     #now we want to allocate numpy array
-    eqz = 0.02768 * b_field**2
+    eqz = np.real(0.0277 * b_field**2)
     sum_of_means = np.zeros(sum(n_step)+1) #one for each time step
     sum_of_meansq = np.zeros(sum(n_step)+1)
     norm = np.zeros(sum(n_step)+1)
@@ -159,10 +159,9 @@ def solve_system(b_field, n_tot,mag, mag_range, atom_range,spinor_phase, n_0,
                     scaled_dt = 2*np.pi * (e_max - e_min)*dt/2
                     t_local_scaled = 0
 
-                    for i in range(n_step[interval]):
+                    for i in trange(n_step[interval],desc = 'time_loop',leave=True, nested=True):
                         t = t + dt
                         t_local_scaled += scaled_dt
-
                         state = chebyshev_propagator(scaled_dt,state,n_max,e,d)
 
                         mean, mean_sq = moments(state,first_n0)

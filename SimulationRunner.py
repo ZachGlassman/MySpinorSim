@@ -37,8 +37,9 @@ Coherent State full Quantum:
 It will provide a unified plotting interface and variable interface
 @author: Zachary Glassman
 """
-import matplotlib
-matplotlib.use('Agg')
+#uncomment if using only terminal access
+#import matplotlib
+#matplotlib.use('Agg')
 from MeanField.MeanFieldSimulation import single_simulation as mean_sim
 from FullQuantumFock.FockStateSimulation import fock_sim
 from CoherentStateChebyshev.spinorf import solve_system as cheby_sim
@@ -48,6 +49,8 @@ import time as time_mod
 import seaborn
 import configparser
 import argparse
+from numpy.lib import scimath
+
 
 def color_text(text, color):
     """Function color text
@@ -71,11 +74,16 @@ class SimulationResult(object):
         self.std = std
         self.name = name
         self.col = color
+        self.q = False
 
     def plot(self, ax):
         """plot given axis ax"""
         ax.fill_between(self.t,self.rho-self.std,self.rho+self.std, color = self.col, alpha = .2)
         ax.plot(self.t, self.rho, label = self.name, color = self.col)
+
+    def plot_ryan(self, ax):
+        ax.plot(self.t, self.rho, label = self.name, color = self.col)
+        ax.plot(self.t, self.std, label = self.name + 'std', color = self.col,linestyle = '--')
 
     def save(self, stype):
         """function to save results to file"""
@@ -169,14 +177,20 @@ class Simulation(object):
             print(color_text('Running Coherent Simulation', 'MAGENTA'))
             ts = time_mod.time()
         if self.pulses == []:
-            dt = .0005
+            dt = .001
             c = [self.params['c']]
+            '''
+            if self.q:
+                emw = [self.params['q']]
+                mag_field = 0
+            '''
             emw = [.277/(np.pi)] #this is also q scaled by pi
+            mag_field = self.params['magnetic_field']*100/np.sqrt(2*np.pi)
             n_step = [int(self.params['total_time']/dt)]
             ndiv = 1
             delta_t = [self.params['total_time']]
 
-        sum_of_means, sum_of_meansq, norm, time = cheby_sim(self.params['magnetic_field']*100,
+        sum_of_means, sum_of_meansq, norm, time = cheby_sim(mag_field,
                   int(self.params['n']),
                   int(self.params['mag']),
                   int(self.params['mag_range']),
@@ -206,18 +220,17 @@ class Simulation(object):
         else:
             fig, ax = plt.subplots()
             if self.fock:
-                self.fock_res.plot(ax)
+                self.fock_res.plot_ryan(ax)
             if self.mean:
-                self.mean_res.plot(ax)
+                self.mean_res.plot_ryan(ax)
             if self.cheby:
-                self.cheby_res.plot(ax)
+                self.cheby_res.plot_ryan(ax)
             ax.set_xlabel('t (s)')
             if self.number:
                 ax.set_ylabel(r'$N_{m_F=0}$')
             else:
                 ax.set_ylabel(r'$\rho_0$')
             ax.legend()
-
 
 
     def _has_result(self):
@@ -230,7 +243,7 @@ class Simulation(object):
         self.cheby = False
         self.mean = False
         self.fock = False
-        
+
 def single_simulation(config, args):
     #keys for configuarion file
     sims = 'Simulation Settings'
@@ -250,6 +263,12 @@ def single_simulation(config, args):
             if args.verbose == True:
                 print('  {0:<15} set to {1}'.format(key,con[key]))
 
+    #now check for q or magnetic field
+    if s.params['q']:
+        s.q = True
+        #now mock mock the magnetic field such that we get q
+        s.params['magnetic_field'] = scimath.sqrt(s.params['q']/277)/(2*np.pi)
+        print(s.params['magnetic_field'])
     #now run simulations
     if args.verbose == True:
         print(''.join('#' for i in range(20)))
@@ -280,14 +299,16 @@ def single_simulation(config, args):
         s.plot()
         print('Saving Figure','{0}_plot.pdf'.format(s.name))
         plt.savefig('{0}_plot.pdf'.format(s.name))
-        
+        plt.show()
+
     if args.verbose == True:
         print(''.join('#' for i in range(20)))
     print('Simulation Complete')
 
 def main(config,args):
     single_simulation(config,args)
-    
+
+
 if __name__ == '__main__':
     #add parser
     parser = argparse.ArgumentParser()
