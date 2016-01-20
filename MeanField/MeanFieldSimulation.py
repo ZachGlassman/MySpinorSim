@@ -18,10 +18,10 @@ from numpy.lib import scimath
 import sys
 from tqdm import tqdm
 
-#first define the system dy/dt = f(y,t)
 def msqr(x):
     return np.conj(x) * x
 
+#first define the system dy/dt = f(y,t)
 def f(t,y,B,p1,p0,pm1,qu1,qu0,qum1,q1,q0,qm1,c):
     """system of ode we want to solve"""
     z1i = y[0]

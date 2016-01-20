@@ -7,8 +7,8 @@ This is the python version of spinorf with multicore processing
 import time as timemod
 import numpy as np
 import math
-from hamiltonian import setup_scaled_H, moments
-from ChebyshevPropagator import chebyshev_propagator
+from .hamiltonian import setup_scaled_H, moments
+from .ChebyshevPropagator import chebyshev_propagator
 from numba import autojit
 from multiprocessing import Process, Queue
 #first we have initization variables
@@ -124,29 +124,51 @@ def calc_m_loop(queue,m,params):
     queue.put([time, sum_of_means, sum_of_meansq, norm])
     #return index,time, sum_of_means, sum_of_meansq, norm
 
-def main():
-    init_state_solver = 'coherent_state'
-    propogate = 'Chebychev'
-    species = 'Na'
-    b_field = 0.0           #BField
-    n_tot = 10000           #TotalAtomNumber
-    mag = 0                 #Magnetization
-    mag_range = 1          #MagRange
-    atom_range = 1         #AtomRange
-    spinor_phase = 0.0      #SpinorPhase
-    n_0 = n_tot - 2         #N_0 numbers tarting in m=0
-    c_init = 24             #C_init in Hz
+def write_out(filename, b_field, n_0, c_init, n_tot, mag, mag_range, atom_range,
+              spinor_phase, init_state_solver, propogate, delta_t, emw, eqz,
+              c, n_step, sum_of_means, sum_of_meansq, norm, time):
+    """Write out the simulation data file"""
+    outstring1 = '{:<15}{:<15}{:<15}{:<15}\n'
+    outstring = '{:<15.6e}{:<15.6e}{:<15.6e}{:<15.6e}\n'
+    infostring = '{:<20} = {:<15}\n'
+    with open(filename, 'w') as fp:
+        #write out parameters
+        fp.write(infostring.format('Species','23Na'))
+        fp.write(infostring.format('B Field (muT)',b_field))
+        fp.write(infostring.format('N_0', n_0))
+        fp.write(infostring.format('C_init',c_init))
+        fp.write(infostring.format('Total Atom Number', n_tot))
+        fp.write(infostring.format('Magnetization', mag))
+        fp.write(infostring.format('Mag Range', mag_range))
+        fp.write(infostring.format('Atom Range', atom_range))
+        fp.write(infostring.format('Spinor Phase', spinor_phase))
+        fp.write(infostring.format('Initial State Solver', init_state_solver))
+        fp.write(infostring.format('Propogator', propogate)+'\n')
+        #write out the arrays
+        fp.write('{:<15}{:<15}{:<15}{:<15}{:<15}\n'.format('Delta t (s)',
+                                                 'Emw(Hz)',
+                                                 'q(Hz)',
+                                                 'C(Hz)',
+                                                 'num steps'))
+        for i in range(len(delta_t)):
+            fp.write('{:<15}{:<15}{:<15}{:<15}{:<15}\n'.format(delta_t[i],
+                                                      emw[i],
+                                                      eqz + emw[i],
+                                                      c[i],
+                                                      n_step[i]))
+        fp.write('\n')
+        fp.write(outstring1.format('t(s)','mean','stddev','norm'))
 
+        for time_step in range(len(sum_of_means)):
+            t = time[time_step]
+            mean = sum_of_means[time_step]/norm[time_step]
+            meansq = sum_of_meansq[time_step]/norm[time_step]
+            fp.write(outstring.format(t,mean,np.sqrt(meansq-mean*mean),norm[time_step]))
 
-    eqz = 0.02768 * b_field**2
-    ndiv = 1
-    #delta_t= [0.04,0.001,0.04]
-    delta_t= [2]
-    #c = [24,24,24]
-    c = [30]
-    emw = [-5]
-    #emw = [0,0,0]
-    n_step = [2000]
+def solve_system(b_field, n_tot,mag, mag_range, atom_range,spinor_phase, n_0,
+                 ndiv, delta_t,c, emw, n_step):
+
+    eqz = np.real(0.0277 * b_field**2)
 
     #now we want to allocate numpy array
     num_par = 2 * mag_range+1
@@ -191,7 +213,6 @@ def main():
     'alpha_zero': alpha_zero,
     'norm_factor':norm_factor
     }
-    print(params)
     #set up multiprocessing
     queue = Queue()
     procs = {}
@@ -216,49 +237,38 @@ def main():
     sum_of_means = np.sum(sum_of_means, axis = 0)
     sum_of_meansq = np.sum(sum_of_meansq, axis = 0)
     norm = np.sum(norm, axis =0)
+    return sum_of_means, sum_of_meansq, norm, time
 
-    outstring1 = '{:<15}{:<15}{:<15}{:<15}\n'
-    outstring = '{:<15.6e}{:<15.6e}{:<15.6e}{:<15.6e}\n'
-    infostring = '{:<20} = {:<15}\n'
-    with open('results_multi.txt', 'w') as fp:
-        #write out parameters
-        fp.write(infostring.format('Species',species))
-        fp.write(infostring.format('B Field (muT)',b_field))
-        fp.write(infostring.format('N_0', n_0))
-        fp.write(infostring.format('C_init',c_init))
-        fp.write(infostring.format('Total Atom Number', n_tot))
-        fp.write(infostring.format('Magnetization', mag))
-        fp.write(infostring.format('Mag Range', mag_range))
-        fp.write(infostring.format('Atom Range', atom_range))
-        fp.write(infostring.format('Spinor Phase', spinor_phase))
-        fp.write(infostring.format('Initial State Solver', init_state_solver))
-        fp.write(infostring.format('Propogator', propogate)+'\n')
-        #write out the arrays
-        fp.write('{:<15}{:<15}{:<15}{:<15}{:<15}\n'.format('Delta t (s)',
-                                                 'Emw(Hz)',
-                                                 'q(Hz)',
-                                                 'C(Hz)',
-                                                 'num steps'))
-        for i in range(len(delta_t)):
-            fp.write('{:<15}{:<15}{:<15}{:<15}{:<15}\n'.format(delta_t[i],
-                                                      emw[i],
-                                                      eqz + emw[i],
-                                                      c[i],
-                                                      n_step[i]))
-        fp.write('\n')
-        fp.write(outstring1.format('t(s)','mean','stddev','norm'))
-
-        for time_step in range(len(sum_of_means)):
-            t = time[time_step]
-            mean = sum_of_means[time_step]/norm[time_step]
-            meansq = sum_of_meansq[time_step]/norm[time_step]
-            fp.write(outstring.format(t,mean,np.sqrt(meansq-mean*mean),norm[time_step]))
-    print('Calculation Complete')
-    print('Norm recovered', np.average(norm))
 
 
 if __name__=='__main__':
+    init_state_solver = 'coherent_state'
+    propogate = 'Chebychev'
+    species = 'Na'
+    b_field = 0          #BField in microtesla
+    n_tot = 2000            #TotalAtomNumber
+    mag = 0                 #Magnetization
+    mag_range = 2           #MagRange
+    atom_range = 2        #AtomRange
+    spinor_phase =0      #SpinorPhase
+    n_0 = n_tot-2          #N_0 numbers tarting in m=0
+    c_init = 24           #C_init in Hz
+    filename = 'results.txt'
+
+
+    ndiv = 3
+    delta_t= [0.04,0.001,0.06]
+    c = [c_init,c_init,c_init]
+    emw = [-2.5,-426,-2.5]
+    n_step = [30,6,30]
     start = timemod.time()
-    main()
+    sum_of_means, sum_of_meansq, norm, time = solve_system(b_field,
+        n_tot,mag, mag_range, atom_range,spinor_phase, n_0,ndiv, delta_t,c, emw, n_step)
+    write_out(filename, b_field, n_0, c_init, n_tot, mag, mag_range, atom_range,
+                  spinor_phase, init_state_solver, propogate, delta_t, emw, eqz,
+                  c, n_step, sum_of_means, sum_of_meansq, norm, time)
     end = timemod.time()
+    print('Calculation Complete')
+    print('Norm recovered', np.average(norm))
     print('Time for Calculation:', end-start)
+    print('File written to:',filename)

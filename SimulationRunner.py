@@ -42,7 +42,8 @@ It will provide a unified plotting interface and variable interface
 #matplotlib.use('Agg')
 from MeanField.MeanFieldSimulation import single_simulation as mean_sim
 from FullQuantumFock.FockStateSimulation import fock_sim
-from CoherentStateChebyshev.spinorf import solve_system as cheby_sim
+from CoherentStateChebyshev.spinorf import solve_system as cheby_sim_s
+from CoherentStateChebyshev.spinorf_multicore import solve_system as cheby_sim_p
 import numpy as np
 import matplotlib.pyplot as plt
 import time as time_mod
@@ -51,6 +52,8 @@ import configparser
 import argparse
 from numpy.lib import scimath
 
+#parallel or serial
+cheby_sim = cheby_sim_p
 
 def color_text(text, color):
     """Function color text
@@ -85,9 +88,9 @@ class SimulationResult(object):
         ax.plot(self.t, self.rho, label = self.name, color = self.col)
         ax.plot(self.t, self.std, label = self.name + 'std', color = self.col,linestyle = '--')
 
-    def save(self, stype):
+    def save(self, name):
         """function to save results to file"""
-        with open('{0}_{1}_results.txt'.format(self.name,stype),'w') as f:
+        with open('{0}_{1}_results.txt'.format(name,self.name),'w') as f:
             f.write('{0:10}{1:10}{2:10}\n'.format('Time','Mean','STD'))
             for i, time in enumerate(self.t):
                 f.write('{:<10.3f}{:<10.3f}{:<10.3f}\n'.format(time,self.rho[i],self.std[i]))
@@ -189,7 +192,6 @@ class Simulation(object):
             n_step = [int(self.params['total_time']/dt)]
             ndiv = 1
             delta_t = [self.params['total_time']]
-
         sum_of_means, sum_of_meansq, norm, time = cheby_sim(mag_field,
                   int(self.params['n']),
                   int(self.params['mag']),
@@ -207,7 +209,6 @@ class Simulation(object):
         std = np.sqrt(meansq - mean*mean)
         self.cheby = True
         self.cheby_res = SimulationResult(time, mean,std, 'green', 'Coherent')
-
         if self.verbose:
             te = time_mod.time()
             print('\n',color_text('Finished Coherent Simulation', 'RED'))
@@ -252,7 +253,8 @@ def single_simulation(config, args):
     fsp = 'Fock Simulation Parameters'
     cscp = 'Coherent State Chebyshev Parameters'
     #create simulation objects
-    s = Simulation(config[sims].get('Name','sim'))
+    name = config[sims].get('Name','sim')
+    s = Simulation(name)
     if args.verbose == True:
         s.verbose = True
     #loop through each one
@@ -278,15 +280,15 @@ def single_simulation(config, args):
     if config[sims].getboolean('run_coherent', False):
         s.run_cheby()
         if config[sims].getboolean('save', False):
-            s.cheby_res.save('Cheby')
+            s.cheby_res.save(name)
     if config[sims].getboolean('run_fock', False):
         s.run_fock()
         if config[sims].getboolean('save', False):
-            s.fock_res.save('Fock')
+            s.fock_res.save(name)
     if config[sims].getboolean('run_tw', False):
         s.run_mean()
         if config[sims].getboolean('save', False):
-            s.mean_res.save('TW')
+            s.mean_res.save(name)
     te = time_mod.time()
     if args.verbose == True:
         mins, secs = divmod(te-ts, 60)
@@ -307,6 +309,8 @@ def single_simulation(config, args):
 
 def main(config,args):
     single_simulation(config,args)
+
+#Should write function where input not from connfig file
 
 
 if __name__ == '__main__':

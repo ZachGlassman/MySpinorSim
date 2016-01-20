@@ -13,22 +13,7 @@ import sys
 import time
 from tqdm import trange
 
-##########################
-#Define Runge-Kutta method
-##########################
-def ynplus1(func, yn,t,dt,**kwargs):
-    """evolve Runge kutta with function func which takes two input arguments
-    yn and t and possibly extra arguments
-    :param yn: value at the previous iteration
-    :param t: the time at current iteration
-    :param dt: time step
-    """
-    k1 = func(yn,t,**kwargs)
-    k2 =  func(yn+dt/2*k1,t+dt/2,**kwargs)
-    k3 = func(yn+dt/2*k2,t+dt/2,**kwargs)
-    k4 = func(yn+dt*k3,t+dt,**kwargs)
-    a = k1+ 2 * k2 + 2 * k3 + k4
-    return yn + dt*a/6
+from scipy.integrate import ode
 
 #########################
 #Calculate magnetic field
@@ -81,18 +66,18 @@ def tri_ham(c,bfield,psi,n_atoms):
     return ans
 
 #may need higher precision integration
-def func_to_integrate(yn,t,bfield,c,n_atoms):
-    com =  tri_ham(c,bfield,yn,n_atoms)
-    return np.complex(0,-1)*com
+def func_to_integrate(t,y,bfield,c,n_atoms):
+    com =  tri_ham(c,bfield,np.asarray(y),n_atoms)
+    return list(np.complex(0,-1)*com)
 
 def set_up_simulation(total_time,dt,tauB,mag_time,c,n_atoms):
     num_steps = int(total_time/dt)
     #calculate B field
-    b_field = calculate_magnetic_field(mag_time,dt,tauB)
+    b_field =2#calculate_magnetic_field(mag_time,dt,tauB)
     params = {
     'c':c,
     'n_atoms':n_atoms,
-    'bfield':b_field[0]
+    'bfield':2
     }
     b_steps = int(mag_time/dt)
     return params, num_steps,b_steps,b_field
@@ -155,23 +140,37 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
 
     psi = create_init_state(n_atoms) # create initial state
 
+
+    bf = 277* bf**2 #q
+    #now evolve in time
+    #integrator for d/dt psi = -i H psi
+
+    integrator = ode(func_to_integrate).set_integrator('zvode')
+    integrator.set_f_params(bf,c,n_atoms)
+    integrator.set_initial_value(list(psi), 0)
+    t = []
+    sol = []
+    '''
+    for i in trange(num_steps):
+        n0[i],n0sqr[i],n0var[i]=calc_n0_vals(psi,n_atoms)
+        sxsqr[i] = calc_sx_sqr(psi,n_atoms)
+        qyzsqr[i] = calc_qyz_sqr(psi,n_atoms)
+        psi = ynplus1(func_to_integrate,psi,i*dt,dt,**params)
+    '''
+    while integrator.successful() and integrator.t < total_time:
+        integrator.integrate(total_time, step = True)
+        t.append(integrator.t)
+        sol.append(integrator.y)
+    num_steps = len(t)
     n0 = np.zeros(num_steps)
     n0sqr = np.zeros(num_steps)
     n0var = np.zeros(num_steps)
     sxsqr = np.zeros(num_steps)
     qyzsqr = np.zeros(num_steps)
-    bf = 277* bf**2 #q
-    #now evolve in time
-    for i in trange(num_steps):
-        n0[i],n0sqr[i],n0var[i]=calc_n0_vals(psi,n_atoms)
-        sxsqr[i] = calc_sx_sqr(psi,n_atoms)
-        qyzsqr[i] = calc_qyz_sqr(psi,n_atoms)
-        params['bfield'] = bf
-        psi = ynplus1(func_to_integrate,psi,i*dt,dt,**params)
-
-    step_size = 30 #don't plot all data
-    time = np.asarray([i * dt for i in range(0,num_steps,step_size)] )
-    return time, n0[::step_size], n0var[::step_size]
+    for i, solution in enumerate(sol):
+        n0[i],n0sqr[i],n0var[i]=calc_n0_vals(solution,n_atoms)
+    step_size = 1 #don't plot all data
+    return t[::step_size], n0[::step_size], n0var[::step_size]
 
 
 
