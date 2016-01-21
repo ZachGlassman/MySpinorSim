@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from numba import autojit
 import sys
 import time
-from tqdm import trange
+from tqdm import tqdm
 
 from scipy.integrate import ode
 
@@ -157,10 +157,12 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
         qyzsqr[i] = calc_qyz_sqr(psi,n_atoms)
         psi = ynplus1(func_to_integrate,psi,i*dt,dt,**params)
     '''
-    while integrator.successful() and integrator.t < total_time:
-        integrator.integrate(total_time, step = True)
-        t.append(integrator.t)
-        sol.append(integrator.y)
+    with tqdm(total=total_time, leave = True) as pbar:
+        while integrator.successful() and integrator.t < total_time:
+            integrator.integrate(total_time, step = True)
+            t.append(integrator.t)
+            sol.append(integrator.y)
+            pbar.update(integrator.t)
     num_steps = len(t)
     n0 = np.zeros(num_steps)
     n0sqr = np.zeros(num_steps)
@@ -184,7 +186,7 @@ if __name__ == '__main__':
     'dt':0.001e-4, #simulation time step,
     'tauB' : 1e-3,
     'c':36*2*np.pi,
-    'n_atoms':40000,
+    'n_atoms':2000,
     'bf':.37
     }
     s = time.time()
