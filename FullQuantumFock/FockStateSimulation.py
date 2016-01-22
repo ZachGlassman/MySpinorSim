@@ -163,7 +163,7 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
     bf = 277* bf**2 #q
     #now evolve in time
     for i in trange(num_steps):
-        n0[i],n0sqr[i],n0var[i]=calc_n0_vals(psi,n_atoms)
+        n0[i],n0sqr[i],n0var[i] = calc_n0_vals(psi,n_atoms)
         sxsqr[i] = calc_sx_sqr(psi,n_atoms)
         qyzsqr[i] = calc_qyz_sqr(psi,n_atoms)
         params['bfield'] = bf

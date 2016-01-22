@@ -148,29 +148,36 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
     integrator = ode(func_to_integrate).set_integrator('zvode')
     integrator.set_f_params(bf,c,n_atoms)
     integrator.set_initial_value(list(psi), 0)
-    t = []
-    sol = []
-    '''
-    for i in trange(num_steps):
-        n0[i],n0sqr[i],n0var[i]=calc_n0_vals(psi,n_atoms)
-        sxsqr[i] = calc_sx_sqr(psi,n_atoms)
-        qyzsqr[i] = calc_qyz_sqr(psi,n_atoms)
-        psi = ynplus1(func_to_integrate,psi,i*dt,dt,**params)
-    '''
+    approx_num_steps = total_time/dt
+    t = np.zeros(approx_num_steps)
+    n0 = np.zeros(approx_num_steps)
+    n0sqr =np.zeros(approx_num_steps)
+    n0var = np.zeros(approx_num_steps)
+    sxsqr = np.zeros(approx_num_steps)
+    qyzsqr = np.zeros(approx_num_steps)
+
+    k = 0
     with tqdm(total=total_time, leave = True) as pbar:
         while integrator.successful() and integrator.t < total_time:
-            integrator.integrate(total_time, step = True)
-            t.append(integrator.t)
-            sol.append(integrator.y)
+            try:
+                t[k] = integrator.t
+                n0[k], n0sqr[k], n0var[k] = calc_n0_vals(integrator.y,n_atoms)
+                sxsqr[k] = calc_sx_sqr(integrator.y,n_atoms)
+                qyzsqr[k] = calc_qyz_sqr(integrator.y,n_atoms)
+                integrator.integrate(total_time, step = True)
+            else:
+                t = np.pad(t,approx_num_steps, mode = 'constant')
+                n0 = np.pad(n0,approx_num_steps, mode = 'constant')
+                n0sqr =np.pad(n0sqr,approx_num_steps, mode = 'constant')
+                n0var = np.pad(n0var,approx_num_steps, mode = 'constant')
+                sxsqr = np.pad(sxsqr,approx_num_steps, mode = 'constant')
+                qyzsqr = np.pad(qyzsqr,approx_num_steps, mode = 'constant')
             pbar.update(integrator.t)
-    num_steps = len(t)
-    n0 = np.zeros(num_steps)
-    n0sqr = np.zeros(num_steps)
-    n0var = np.zeros(num_steps)
-    sxsqr = np.zeros(num_steps)
-    qyzsqr = np.zeros(num_steps)
-    for i, solution in enumerate(sol):
-        n0[i],n0sqr[i],n0var[i]=calc_n0_vals(solution,n_atoms)
+
+    t = t[:k]
+    n0 = n0[:k]
+    n0sqr = n0sqr[:k]
+    n0var = n0var[:k]
     step_size = 1 #don't plot all data
     return t[::step_size], n0[::step_size], n0var[::step_size]
 
