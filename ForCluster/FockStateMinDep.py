@@ -9,7 +9,6 @@ Has minimal dependencies, hopefully used on cluster.
 """
 
 import numpy as np
-from scipy.integrate import ode
 import argparse
 from numpy.lib import scimath
 from tqdm import trange
@@ -29,19 +28,6 @@ def ynplus1(func, yn,t,dt,**kwargs):
     k4 = func(yn+dt*k3,t+dt,**kwargs)
     a = k1+ 2 * k2 + 2 * k3 + k4
     return yn + dt*a/6
-
-def tri_ham_np(t,y,c,bfield,n_atoms):
-    '''compute the tridiagonal hamiltonian for fock state
-    so we can only use numpy, create arrays of the indices'''
-    ans = np.empty(len(y), dtype = complex)
-    i = np.mgrid[0:len(y)]
-    ans = (i*(2*(n_atoms-2*i))-1)* c/n_atoms*y + 2 * bfield * i*y
-    i = np.mgrid[1:len(y)]
-    ans[1:] += i * np.sqrt((n_atoms - 2 * (i-1) - 1)*(n_atoms - 2*(i-1)))*y[:-1]* c/n_atoms
-    i = np.mgrid[:(len(y)-1)]
-    ans[:-1]+=(i+1)*np.sqrt((n_atoms-2*(i+1)+1)*(n_atoms-2*(i+1)+2))*y[1:]* c/n_atoms
-
-    return list(np.complex(0,-1)*ans)
 
 def tri_ham(c,bfield,y,n_atoms):
     '''compute the tridiagonal hamiltonian for fock state
@@ -135,38 +121,6 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
     time = np.asarray([i * dt for i in range(0,num_steps,step_size)] )
     return time, n0[::step_size], n0var[::step_size]
 
-
-def fock_sim_fast(total_time,dt,mag_time,tauB,n_atoms,c, bf):
-    params,num_steps,b_steps,b_field = set_up_simulation(total_time,
-                                                dt,tauB,mag_time,c,n_atoms)
-
-    psi = create_init_state(n_atoms) # create initial state
-    params['bfield'] = bf
-    n0 = []
-    n0sqr = []
-    n0var = []
-    sxsqr = []
-    qyzsqr = []
-    t = []
-    bf = 277* bf**2 #q
-    #now evolve in time
-    integrator = ode(tri_ham_np).set_integrator('zvode')
-    integrator.set_f_params(c,bf,n_atoms)
-    integrator.set_initial_value(list(psi), 0)
-
-    while integrator.successful() and integrator.t < total_time:
-        t.append(integrator.t)
-        n0_t, n0sqr_t, n0var_t = calc_n0_vals(integrator.y,n_atoms)
-        sxsqr.append(calc_sx_sqr(integrator.y,n_atoms))
-        qyzsqr.append(calc_qyz_sqr(integrator.y,n_atoms))
-        n0.append(n0_t)
-        n0sqr.append(n0sqr_t)
-        n0var.append(n0var_t)
-        integrator.integrate(total_time, step = True)
-
-    step_size = 30 #don't plot all data
-    return t[::step_size], n0[::step_size], n0var[::step_size]
-
 def q_to_bf(q):
     return scimath.sqrt(q/277*(2*np.pi)**3)/(2*np.pi)
 
@@ -205,7 +159,7 @@ if __name__ == '__main__':
                         dest='name',
                         default='name',
                         type=str,
-                        help = 'name of simulation')
+                        help = 'path and name of simulation')
     parser.add_argument('-n',action='store',
                         dest= 'num_atoms',
                         default=40000,

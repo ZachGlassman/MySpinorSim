@@ -269,7 +269,7 @@ def single_simulation(config, args):
     if s.params['q']:
         s.q = True
         #now mock mock the magnetic field such that we get q
-        s.params['magnetic_field'] = scimath.sqrt(s.params['q']/277)/(2*np.pi)
+        s.params['magnetic_field'] = scimath.sqrt(s.params['q']/277*(2*np.pi)**3)/(2*np.pi)
         print(s.params['magnetic_field'])
     #now run simulations
     if args.verbose == True:
