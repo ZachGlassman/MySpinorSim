@@ -1,8 +1,8 @@
 #!/bin/bash
-#SLURM -p debug
-#SLURM -n 1
-#SLURM -t :60
-#SLURM --mem 1000
+#SBATCH -p debug
+#SBATCH -n 1
+#SBATCH -t :60
+#SBATCH --mem 1000
 
 .~/.profile
 cd /lustre/zachg
