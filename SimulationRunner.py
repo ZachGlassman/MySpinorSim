@@ -53,7 +53,7 @@ import argparse
 from numpy.lib import scimath
 
 #parallel or serial
-cheby_sim = cheby_sim_p
+cheby_sim = cheby_sim_s
 
 def color_text(text, color):
     """Function color text
