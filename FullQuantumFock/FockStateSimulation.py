@@ -150,28 +150,76 @@ def calc_qyz_sqr(psi,n):
 # main routine
 ###############################################
 def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
-    params,num_steps,b_steps,b_field = set_up_simulation(total_time,
-                                                dt,tauB,mag_time,c,n_atoms)
+    try:
+        """bf,c,total_time,dt are a list"""
+        #calculate B field
+        num_steps = [int(total_time[i]/dt[i]) for i in range(len(dt))]
 
-    psi = create_init_state(n_atoms) # create initial state
+        psi = create_init_state(n_atoms)
+        n0_ret = np.array([])
+        n0sqr_ret = np.zeros([])
+        n0var_ret = np.zeros([])
+        sxsqr_ret = np.zeros([])
+        qyzsqr_ret = np.zeros([])
+        time_ret = np.zeros([])
+        t_sim = 0
+        for step in trange(len(dt),desc='outer_loop',leave=True):
+            params = {
+            'c':c[step],
+            'n_atoms':n_atoms,
+            'bfield':bf[step]**2*277
+            }
+            n0 = np.zeros(num_steps[step])
+            n0sqr = np.zeros(num_steps[step])
+            n0var = np.zeros(num_steps[step])
+            sxsqr = np.zeros(num_steps[step])
+            qyzsqr = np.zeros(num_steps[step])
+            time = np.zeros(num_steps[step])
+            for i in trange(num_steps[step],desc = 'inner_loop',leave=True, nested=True):
+                n0[i],n0sqr[i],n0var[i] = calc_n0_vals(psi,n_atoms)
+                sxsqr[i] = calc_sx_sqr(psi,n_atoms)
+                qyzsqr[i] = calc_qyz_sqr(psi,n_atoms)
+                time[i] = t_sim
+                t_sim += dt[step]
+                psi = ynplus1(func_to_integrate,psi,t_sim,dt[step],**params)
 
-    n0 = np.zeros(num_steps)
-    n0sqr = np.zeros(num_steps)
-    n0var = np.zeros(num_steps)
-    sxsqr = np.zeros(num_steps)
-    qyzsqr = np.zeros(num_steps)
-    bf = 277* bf**2 #q
-    #now evolve in time
-    for i in trange(num_steps):
-        n0[i],n0sqr[i],n0var[i] = calc_n0_vals(psi,n_atoms)
-        sxsqr[i] = calc_sx_sqr(psi,n_atoms)
-        qyzsqr[i] = calc_qyz_sqr(psi,n_atoms)
-        params['bfield'] = bf
-        psi = ynplus1(func_to_integrate,psi,i*dt,dt,**params)
+            n0_ret = np.hstack((n0_ret,n0))
+            n0sqr_ret = np.hstack((n0sqr_ret,n0sqr))
+            n0var_ret = np.hstack((n0var_ret,n0var))
+            sxsqr_ret = np.hstack((sxsqr_ret,sxsqr))
+            qyzsqr_ret = np.hstack((qyzsqr_ret,qyzsqr))
+            time_ret = np.hstack((time_ret,time))
+        n0 = n0_ret
+        n0sqr = n0sqr_ret
+        n0var = n0var_ret
+        sxsqr = sxsqr_ret
+        qyzsqr = qyzsqr_ret
+        time = time_ret
+
+    except:
+        """bf is just number"""
+        params,num_steps,b_steps,b_field = set_up_simulation(total_time,
+                                                    dt,tauB,mag_time,c,n_atoms)
+
+        psi = create_init_state(n_atoms) # create initial state
+
+        n0 = np.zeros(num_steps)
+        n0sqr = np.zeros(num_steps)
+        n0var = np.zeros(num_steps)
+        sxsqr = np.zeros(num_steps)
+        qyzsqr = np.zeros(num_steps)
+        bf = 277* bf**2 #q
+        #now evolve in time
+        for i in trange(num_steps):
+            n0[i],n0sqr[i],n0var[i] = calc_n0_vals(psi,n_atoms)
+            sxsqr[i] = calc_sx_sqr(psi,n_atoms)
+            qyzsqr[i] = calc_qyz_sqr(psi,n_atoms)
+            params['bfield'] = bf
+            psi = ynplus1(func_to_integrate,psi,i*dt,dt,**params)
+        time = np.asarray([i * dt for i in range(num_steps)] )
 
     step_size = 30 #don't plot all data
-    time = np.asarray([i * dt for i in range(0,num_steps,step_size)] )
-    return time, n0[::step_size], n0var[::step_size]
+    return time[::step_size], n0[::step_size], n0var[::step_size]
 
 
 

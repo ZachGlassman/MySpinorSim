@@ -134,7 +134,7 @@ def calc_qyz_sqr(psi,n):
 ###############################################
 # main routine
 ###############################################
-def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
+def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf, pulse_times):
     params,num_steps,b_steps,b_field = set_up_simulation(total_time,
                                                 dt,tauB,mag_time,c,n_atoms)
 
@@ -158,6 +158,7 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
 
     with tqdm(total=total_time, leave = True) as pbar:
         while integrator.successful() and integrator.t < total_time:
+            integrator.set_f_params(bf,c,n_atoms)
             integrator.integrate(total_time, step = True)
             t.append(integrator.t)
             n0_t, n0sqr_t, n0var_t = calc_n0_vals(integrator.y,n_atoms)

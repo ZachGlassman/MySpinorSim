@@ -47,13 +47,12 @@ from CoherentStateChebyshev.spinorf_multicore import solve_system as cheby_sim_p
 import numpy as np
 import matplotlib.pyplot as plt
 import time as time_mod
-import seaborn
 import configparser
 import argparse
 from numpy.lib import scimath
 
 #parallel or serial
-cheby_sim = cheby_sim_s
+cheby_sim = cheby_sim_p
 
 def color_text(text, color):
     """Function color text
@@ -88,6 +87,10 @@ class SimulationResult(object):
         ax.plot(self.t, self.rho, label = self.name, color = self.col)
         ax.plot(self.t, self.std, label = self.name + 'std', color = self.col,linestyle = '--')
 
+    def plot_no_color(self, ax, col):
+        ax.plot(self.t, self.rho, label = self.name, color = col)
+        ax.plot(self.t, self.std, label = self.name + 'std', color = col,linestyle = '--')
+
     def save(self, name):
         """function to save results to file"""
         with open('{0}_{1}_results.txt'.format(name,self.name),'w') as f:
@@ -99,6 +102,8 @@ class SimulationResult(object):
         print(self.t)
         print(self.rho)
 
+def q_to_b(q):
+    return scimath.sqrt(q/277*(2*np.pi)**3)/(2*np.pi)
 
 class Simulation(object):
     """Simulation Class is a simulation for a certain set of parameters
@@ -129,11 +134,15 @@ class Simulation(object):
         self.cheby = False
         self.verbose = False
 
+    def transform_q(self):
+        self.params['magnetic_field'] = q_to_b(self.params['q'])
+
     def run_fock(self):
         """run a fock simulation with the current parameters"""
         if self.verbose:
             print(color_text('Running Fock State Simulation', 'CYAN'))
             ts = time_mod.time()
+
         time, n0, n0var = fock_sim(self.params['total_time'],
                 self.params['time_step'],
                 self.params['mag_time'],
@@ -141,6 +150,8 @@ class Simulation(object):
                 int(self.params['n']),
                 self.params['c']*2*np.pi,
                 self.params['magnetic_field'])
+
+
         std = np.sqrt(n0var)
         if not self.number:
             n0 = n0/self.params['n']
@@ -158,12 +169,14 @@ class Simulation(object):
         if self.verbose:
             print(color_text('Running Mean Field Simulation', 'YELLOW'))
             ts = time_mod.time()
-        time, mean, std, mw = self.mean_res = mean_sim(int(self.params['n']),
+        time, mean, std, mw = mean_sim(int(self.params['n']),
                  int(self.params['n_samps']),
                  self.params['c']*2*np.pi,
                  self.params['total_time']+.05*self.params['total_time'],
                  self.params['magnetic_field'],
-                 self.pulses,qu0=0)
+                 self.pulses,
+                 qu0=0)
+
         if self.number:
             mean = mean * self.params['n']
             std = std * self.params['n']
@@ -182,16 +195,20 @@ class Simulation(object):
         if self.pulses == []:
             dt = .001
             c = [self.params['c']]
-            '''
-            if self.q:
-                emw = [self.params['q']]
-                mag_field = 0
-            '''
-            emw = [.277/(np.pi)] #this is also q scaled by pi
+            emw = [0]
             mag_field = self.params['magnetic_field']*100/np.sqrt(2*np.pi)
             n_step = [int(self.params['total_time']/dt)]
             ndiv = 1
             delta_t = [self.params['total_time']]
+        else:
+            dt= [.001,.001,.001]
+            c= self.params['c']
+            ndiv = len(c)
+            emw = self.params['q']
+            mag_field = 0
+            n_step = [int(self.params['total_time'][i]/dt[i]) for i in range(len(dt))]
+            delta_t = [i for i in self.params['total_time']]
+
         sum_of_means, sum_of_meansq, norm, time = cheby_sim(mag_field,
                   int(self.params['n']),
                   int(self.params['mag']),
@@ -215,9 +232,25 @@ class Simulation(object):
             print('Execution Time: {0:>4.2f}'.format(te-ts))
 
 
-    def plot(self):
+    def plot(self, col = False):
+        import seaborn
+
         if not self._has_result:
             print('Cannot plot with no simulation')
+        if col != False:
+            ax = plt.gca()
+            if self.fock:
+                self.fock_res.plot_no_color(ax,col=col)
+            if self.mean:
+                self.mean_res.plot_no_color(ax,col=col)
+            if self.cheby:
+                self.cheby_res.plot_no_color(ax,col=col)
+            ax.set_xlabel('t (s)')
+            if self.number:
+                ax.set_ylabel(r'$N_{m_F=0}$')
+            else:
+                ax.set_ylabel(r'$\rho_0$')
+            ax.legend()
         else:
             fig, ax = plt.subplots()
             if self.fock:
@@ -245,6 +278,8 @@ class Simulation(object):
         self.mean = False
         self.fock = False
 
+
+
 def single_simulation(config, args):
     #keys for configuarion file
     sims = 'Simulation Settings'
@@ -269,7 +304,7 @@ def single_simulation(config, args):
     if s.params['q']:
         s.q = True
         #now mock mock the magnetic field such that we get q
-        s.params['magnetic_field'] = scimath.sqrt(s.params['q']/277*(2*np.pi)**3)/(2*np.pi)
+        s.transform_q()
         print(s.params['magnetic_field'])
     #now run simulations
     if args.verbose == True:
