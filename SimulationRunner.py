@@ -50,6 +50,7 @@ import time as time_mod
 import configparser
 import argparse
 from numpy.lib import scimath
+import seaborn
 
 #parallel or serial
 cheby_sim = cheby_sim_p
@@ -70,13 +71,14 @@ def color_text(text, color):
 class SimulationResult(object):
     """class to hold results so we can parse different simulation into
     equivalent results"""
-    def __init__(self,time,rho_0,std,color, name):
+    def __init__(self,time,rho_0,std,color, name, init_norm = None):
         self.t = time
         self.rho = rho_0
         self.std = std
         self.name = name
         self.col = color
         self.q = False
+        self.init_norm = init_norm
 
     def plot(self, ax):
         """plot given axis ax"""
@@ -93,10 +95,16 @@ class SimulationResult(object):
 
     def save(self, name):
         """function to save results to file"""
-        with open('{0}_{1}_results.txt'.format(name,self.name),'w') as f:
-            f.write('{0:10}{1:10}{2:10}\n'.format('Time','Mean','STD'))
-            for i, time in enumerate(self.t):
-                f.write('{:<10.3f}{:<10.3f}{:<10.3f}\n'.format(time,self.rho[i],self.std[i]))
+        try:
+            with open('{0}_{1}_results.txt'.format(name,self.name),'w') as f:
+                f.write('{0:10}{1:10}{2:10}{3:10}\n'.format('Time','Mean','STD','NORM'))
+                for i, time in enumerate(self.t):
+                    f.write('{:<20.8f}{:<20.8f}{:<20.8f}{:<20.8f}\n'.format(time,self.rho[i],self.std[i],self.init_norm[i]))
+        except:
+            with open('{0}_{1}_results.txt'.format(name,self.name),'w') as f:
+                f.write('{0:10}{1:10}{2:10}\n'.format('Time','Mean','STD'))
+                for i, time in enumerate(self.t):
+                    f.write('{:<20.8f}{:<20.8f}{:<20.8f}\n'.format(time,self.rho[i],self.std[i]))
 
     def print_information(self):
         print(self.t)
@@ -143,7 +151,7 @@ class Simulation(object):
             print(color_text('Running Fock State Simulation', 'CYAN'))
             ts = time_mod.time()
 
-        time, n0, n0var = fock_sim(self.params['total_time'],
+        time, n0, n0var, init_norm = fock_sim(self.params['total_time'],
                 self.params['time_step'],
                 self.params['mag_time'],
                 self.params['tauB'],
@@ -156,7 +164,7 @@ class Simulation(object):
         if not self.number:
             n0 = n0/self.params['n']
             std= std/self.params['n']
-        self.fock_res = SimulationResult(time, n0, std, 'red','Fock')
+        self.fock_res = SimulationResult(time, n0, std, 'red','Fock',init_norm=init_norm)
         self.fock = True
         if self.verbose:
             te = time_mod.time()
@@ -201,7 +209,7 @@ class Simulation(object):
             ndiv = 1
             delta_t = [self.params['total_time']]
         else:
-            dt= [.001,.001,.001]
+            dt= [.001,.0001,.001]
             c= self.params['c']
             ndiv = len(c)
             emw = self.params['q']
@@ -232,8 +240,7 @@ class Simulation(object):
             print('Execution Time: {0:>4.2f}'.format(te-ts))
 
 
-    def plot(self, col = False):
-        import seaborn
+    def plot(self, col = False, region=False):
 
         if not self._has_result:
             print('Cannot plot with no simulation')
@@ -245,6 +252,20 @@ class Simulation(object):
                 self.mean_res.plot_no_color(ax,col=col)
             if self.cheby:
                 self.cheby_res.plot_no_color(ax,col=col)
+            ax.set_xlabel('t (s)')
+            if self.number:
+                ax.set_ylabel(r'$N_{m_F=0}$')
+            else:
+                ax.set_ylabel(r'$\rho_0$')
+            ax.legend()
+        elif region == True:
+            fig, ax = plt.subplots()
+            if self.fock:
+                self.fock_res.plot(ax)
+            if self.mean:
+                self.mean_res.plot(ax)
+            if self.cheby:
+                self.cheby_res.plot(ax)
             ax.set_xlabel('t (s)')
             if self.number:
                 ax.set_ylabel(r'$N_{m_F=0}$')

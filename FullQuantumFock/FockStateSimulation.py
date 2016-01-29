@@ -156,12 +156,14 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
         num_steps = [int(total_time[i]/dt[i]) for i in range(len(dt))]
 
         psi = create_init_state(n_atoms)
+        psi_init = create_init_state(n_atoms)
         n0_ret = np.array([])
         n0sqr_ret = np.zeros([])
         n0var_ret = np.zeros([])
         sxsqr_ret = np.zeros([])
         qyzsqr_ret = np.zeros([])
         time_ret = np.zeros([])
+        init_norm_ret = np.zeros([])
         t_sim = 0
         for step in trange(len(dt),desc='outer_loop',leave=True):
             params = {
@@ -175,8 +177,10 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
             sxsqr = np.zeros(num_steps[step])
             qyzsqr = np.zeros(num_steps[step])
             time = np.zeros(num_steps[step])
+            init_norm = np.zeros(num_steps[step])
             for i in trange(num_steps[step],desc = 'inner_loop',leave=True, nested=True):
                 n0[i],n0sqr[i],n0var[i] = calc_n0_vals(psi,n_atoms)
+                init_norm[i] = np.linalg.norm(psi-psi_init)
                 sxsqr[i] = calc_sx_sqr(psi,n_atoms)
                 qyzsqr[i] = calc_qyz_sqr(psi,n_atoms)
                 time[i] = t_sim
@@ -189,12 +193,15 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
             sxsqr_ret = np.hstack((sxsqr_ret,sxsqr))
             qyzsqr_ret = np.hstack((qyzsqr_ret,qyzsqr))
             time_ret = np.hstack((time_ret,time))
+            init_norm_ret = np.hstack((init_norm_ret,init_norm))
+
         n0 = n0_ret
         n0sqr = n0sqr_ret
         n0var = n0var_ret
         sxsqr = sxsqr_ret
         qyzsqr = qyzsqr_ret
         time = time_ret
+        init_norm = init_norm_ret
 
     except:
         """bf is just number"""
@@ -219,7 +226,10 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
         time = np.asarray([i * dt for i in range(num_steps)] )
 
     step_size = 30 #don't plot all data
-    return time[::step_size], n0[::step_size], n0var[::step_size]
+    try:
+        return time[::step_size], n0[::step_size], n0var[::step_size], init_norm[::step_size]
+    except:
+        return time[::step_size], n0[::step_size], n0var[::step_size], None
 
 
 
