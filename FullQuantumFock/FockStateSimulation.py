@@ -97,9 +97,9 @@ def set_up_simulation(total_time,dt,tauB,mag_time,c,n_atoms):
     b_steps = int(mag_time/dt)
     return params, num_steps,b_steps,b_field
 
-def create_init_state(n_atoms):
+def create_init_state(n_atoms,pairs = 0):
     state = np.zeros(int(n_atoms/2)+1,dtype = complex)
-    state[0]= np.complex(1,0)
+    state[pairs]= np.complex(1,0)
     return state
 
 def get_bfield(bfield,b_steps,step):
@@ -149,14 +149,13 @@ def calc_qyz_sqr(psi,n):
 ###############################################
 # main routine
 ###############################################
-def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
+def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf,npairs):
     try:
         """bf,c,total_time,dt are a list"""
         #calculate B field
         num_steps = [int(total_time[i]/dt[i]) for i in range(len(dt))]
-
-        psi = create_init_state(n_atoms)
-        psi_init = create_init_state(n_atoms)
+        psi = create_init_state(n_atoms,npairs)
+        psi_init = create_init_state(n_atoms,npairs)
         n0_ret = np.array([])
         n0sqr_ret = np.zeros([])
         n0var_ret = np.zeros([])
@@ -208,7 +207,8 @@ def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):
         params,num_steps,b_steps,b_field = set_up_simulation(total_time,
                                                     dt,tauB,mag_time,c,n_atoms)
 
-        psi = create_init_state(n_atoms) # create initial state
+
+        psi = create_init_state(n_atoms, npairs) # create initial state
 
         n0 = np.zeros(num_steps)
         n0sqr = np.zeros(num_steps)

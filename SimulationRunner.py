@@ -152,6 +152,7 @@ class Simulation(object):
         if self.verbose:
             print(color_text('Running Fock State Simulation', 'CYAN'))
             ts = time_mod.time()
+        npairs = self.params['n1']/2
 
         time, n0, n0var, init_norm = fock_sim(self.params['total_time'],
                 self.params['time_step'],
@@ -159,7 +160,8 @@ class Simulation(object):
                 self.params['tauB'],
                 int(self.params['n']),
                 self.params['c']*2*np.pi,
-                self.params['magnetic_field'])
+                self.params['magnetic_field'],
+                npairs)
 
 
         std = np.sqrt(n0var)
