@@ -53,7 +53,7 @@ from numpy.lib import scimath
 import seaborn
 
 #parallel or serial
-cheby_sim = cheby_sim_p
+cheby_sim = cheby_sim_s
 
 def color_text(text, color):
     """Function color text
@@ -127,7 +127,7 @@ class Simulation(object):
             'atom_range': 20,
             'mag_range': 20,
             'spinor_phase': 0,
-            'n_0': 4998,
+            'n0':4998,
             'n1':0,
             'nm1':0,
             'time_step': 0.001e-3,
@@ -181,6 +181,7 @@ class Simulation(object):
         if self.verbose:
             print(color_text('Running Mean Field Simulation', 'YELLOW'))
             ts = time_mod.time()
+        
         time, mean, std, mw = mean_sim(int(self.params['n1']),
                  int(self.params['n0']),
                  int(self.params['nm1']),
@@ -231,7 +232,7 @@ class Simulation(object):
                   int(self.params['mag_range']),
                   int(self.params['atom_range']),
                   self.params['spinor_phase'],
-                  int(self.params['n_0']),
+                  int(self.params['n0']),
                   ndiv,
                   delta_t,
                   c,

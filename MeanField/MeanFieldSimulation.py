@@ -72,15 +72,22 @@ def find_phase(ele):
 def generate_states(N1,N0,Nm1,theta,s):
     """generate quasi probability distribution"""
     N = N1 + N0 + Nm1
+    r0 = N0/N
+    r1 = N1/N
+    rm1 = Nm1/N
     #need to divide by N
-    a = np.sqrt(2*N0*N1/N**2)
-    b = np.sqrt(2*N0*Nm1/N**2)
+    a = np.sqrt(2*r0*r1)
+    b = np.sqrt(2*r0*rm1)
+
     sx_mean = np.cos(theta/2)*(a+b)
     sy_mean = np.sin(theta/2)*(b-a)
     nyz_mean = -np.sin(theta/2)*(a+b)
     nxz_mean = np.cos(theta/2)*(a-b)
-    var_one = 1/2 * np.abs(-2*N0+2 * np.sqrt(N1*Nm1)+N1+Nm1)
-    var_two = 1/2 * np.abs(2*N0+2 * np.sqrt(N1*Nm1)-N1-Nm1)
+
+    var_one = N*np.sqrt(r0**2-2*r0*np.sqrt(r1)*np.sqrt(rm1)*np.cos(theta)-r0*r1-r0*rm1+r1**(3/2)*np.sqrt(rm1)*np.cos(theta)+np.sqrt(r1)*rm1**(3/2)*np.cos(theta)+0.25*r1**2+0.5*r1*rm1*np.cos(2*theta) + r1*rm1 + 0.25*rm1**2)
+    var_two = N*np.sqrt(r0**2+2*r0*np.sqrt(r1)*np.sqrt(rm1)*np.cos(theta)-r0*r1-r0*rm1-r1**(3/2)*np.sqrt(rm1)*np.cos(theta)-np.sqrt(r1)*rm1**(3/2)*np.cos(theta)+0.25*r1**2+0.5*r1*rm1*np.cos(2*theta) + r1*rm1 + 0.25*rm1**2)
+    var_two = var_one
+
     sx = np.random.normal(loc = sx_mean, scale = 1/np.sqrt(var_one), size = s)
     sy = np.random.normal(loc = sy_mean, scale = 1/np.sqrt(var_two), size =s)
     nyz = np.random.normal(loc = nyz_mean, scale = 1/np.sqrt(var_one), size = s)
@@ -100,6 +107,7 @@ def generate_states(N1,N0,Nm1,theta,s):
     states[:,0] = scimath.sqrt((1-rho_0+m)/2) * np.exp(txip*1j)
     states[:,1] = scimath.sqrt(rho_0)
     states[:,2] = scimath.sqrt((1-rho_0-m)/2) * np.exp(txim*1j)
+
     return states
 
 def get_q(qt,val,qu1,qu0,qum1):
@@ -186,7 +194,7 @@ def solve_system(y0, B, p1, p0, pm1,qu1,qu0,qum1,q1,q0,qm1,c,pulses,tfinal):
 # Operator Definitions
 ###################################
 S_x = Operator(np.array([[0,1,0],[1,0,1],[0,1,0]])*1/np.sqrt(2),r'$S_x$')
-N_yz = Operator(1j/np.sqrt(2)* np.array([[0,-1,0],[1,0,1],[0,-1,0]]),r'$N_{yz}#')
+N_yz = Operator(1j/np.sqrt(2)* np.array([[0,-1,0],[1,0,1],[0,-1,0]]),r'$N_{yz}$')
 rho_0 = Operator(np.array([[0,0,0],[0,1,0],[0,0,0]]),r'$\rho_0$')
 
 
