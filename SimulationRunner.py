@@ -128,6 +128,8 @@ class Simulation(object):
             'mag_range': 20,
             'spinor_phase': 0,
             'n_0': 4998,
+            'n1':0,
+            'nm1':0,
             'time_step': 0.001e-3,
             'tauB': 1e-3,
             'total_time': .01,
@@ -177,7 +179,10 @@ class Simulation(object):
         if self.verbose:
             print(color_text('Running Mean Field Simulation', 'YELLOW'))
             ts = time_mod.time()
-        time, mean, std, mw = mean_sim(int(self.params['n']),
+        time, mean, std, mw = mean_sim(int(self.params['n1']),
+                 int(self.params['n0']),
+                 int(self.params['nm1']),
+                 self.params['spinor_phase'],
                  int(self.params['n_samps']),
                  self.params['c']*2*np.pi,
                  self.params['total_time']+.05*self.params['total_time'],
@@ -186,8 +191,9 @@ class Simulation(object):
                  qu0=0)
 
         if self.number:
-            mean = mean * self.params['n']
-            std = std * self.params['n']
+            N = self.params['n0'] + self.params['n1'] + self.params['nm1']
+            mean = mean * N
+            std = std * N
         self.mean_res = SimulationResult(time, mean, std, 'blue','Mean')
         self.mean = True
         if self.verbose:

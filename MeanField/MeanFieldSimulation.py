@@ -13,7 +13,7 @@ Model only valid when pulse duration small (<.1 ms)
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import ode
+from scipy.integrate import  ode
 from numpy.lib import scimath
 import sys
 from tqdm import tqdm
@@ -69,15 +69,26 @@ def find_phase(ele):
     ans =  np.angle(ele)
     return ans[0] + ans[2] - 2 * ans[1]
 
-def generate_states(N,s):
-    """generate quasi probability distribution from Chapman paper"""
-    sx = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = s)
-    sy = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size =s)
-    nyz = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = s)
-    nxz = np.random.normal(loc = 0, scale = 1/np.sqrt(N), size = s)
+def generate_states(N1,N0,Nm1,theta,s):
+    """generate quasi probability distribution"""
+    N = N1 + N0 + Nm1
+    #need to divide by N
+    a = np.sqrt(2*N0*N1/N**2)
+    b = np.sqrt(2*N0*Nm1/N**2)
+    sx_mean = np.cos(theta/2)*(a+b)
+    sy_mean = np.sin(theta/2)*(b-a)
+    nyz_mean = -np.sin(theta/2)*(a+b)
+    nxz_mean = np.cos(theta/2)*(a-b)
+    var_one = 1/2 * np.abs(-2*N0+2 * np.sqrt(N1*Nm1)+N1+Nm1)
+    var_two = 1/2 * np.abs(2*N0+2 * np.sqrt(N1*Nm1)-N1-Nm1)
+    sx = np.random.normal(loc = sx_mean, scale = 1/np.sqrt(var_one), size = s)
+    sy = np.random.normal(loc = sy_mean, scale = 1/np.sqrt(var_two), size =s)
+    nyz = np.random.normal(loc = nyz_mean, scale = 1/np.sqrt(var_one), size = s)
+    nxz = np.random.normal(loc = nxz_mean, scale = 1/np.sqrt(var_two), size = s)
 
-    txip = np.arctan(-(sy + nyz)/(sx+ nxz))
-    txim = np.arctan((sy-nyz)/(sx-nxz))
+    txip = np.where((sy+nyz)>0,np.arctan(-(sy + nyz)/(sx+ nxz)),np.arctan(-(sy + nyz)/(sx+ nxz))+np.pi)
+    txim = np.where((sy-nyz)>0,np.arctan((sy-nyz)/(sx-nxz)),np.arctan((sy-nyz)/(sx-nxz))+np.pi)
+
     a = (sx+nxz)**2/(np.cos(txip))**2
     b = (sx-nxz)**2/(np.cos(txim))**2
 
@@ -89,7 +100,6 @@ def generate_states(N,s):
     states[:,0] = scimath.sqrt((1-rho_0+m)/2) * np.exp(txip*1j)
     states[:,1] = scimath.sqrt(rho_0)
     states[:,2] = scimath.sqrt((1-rho_0-m)/2) * np.exp(txim*1j)
-
     return states
 
 def get_q(qt,val,qu1,qu0,qum1):
@@ -192,7 +202,7 @@ def get_exp_values(ans,step_size):
 
 
 
-def single_simulation(N,nsamps,c,tfinal,B,pulses,qu0=0):
+def single_simulation(N1,N0,Nm1,theta,nsamps,c,tfinal,B,pulses,qu0=0):
     """main routine for integration
     problem is setup for arbitrary RF pulses
     pulse_dict
@@ -219,9 +229,8 @@ def single_simulation(N,nsamps,c,tfinal,B,pulses,qu0=0):
     pars['c'] = c
     pars['pulses'] = pulses
     pars['tfinal'] = tfinal
-
     #now start calculation
-    states = generate_states(N,nsamps)
+    states = generate_states(N1,N0,Nm1,theta,nsamps)
     step_size = 1
     ans_1 = []
     #do calculation
