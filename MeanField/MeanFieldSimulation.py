@@ -86,15 +86,16 @@ def generate_states(N1,N0,Nm1,theta,s):
 
     var_one = N*np.sqrt(r0**2-2*r0*np.sqrt(r1)*np.sqrt(rm1)*np.cos(theta)-r0*r1-r0*rm1+r1**(3/2)*np.sqrt(rm1)*np.cos(theta)+np.sqrt(r1)*rm1**(3/2)*np.cos(theta)+0.25*r1**2+0.5*r1*rm1*np.cos(2*theta) + r1*rm1 + 0.25*rm1**2)
     var_two = N*np.sqrt(r0**2+2*r0*np.sqrt(r1)*np.sqrt(rm1)*np.cos(theta)-r0*r1-r0*rm1-r1**(3/2)*np.sqrt(rm1)*np.cos(theta)-np.sqrt(r1)*rm1**(3/2)*np.cos(theta)+0.25*r1**2+0.5*r1*rm1*np.cos(2*theta) + r1*rm1 + 0.25*rm1**2)
-    var_two = var_one
+
 
     sx = np.random.normal(loc = sx_mean, scale = 1/np.sqrt(var_one), size = s)
     sy = np.random.normal(loc = sy_mean, scale = 1/np.sqrt(var_two), size =s)
     nyz = np.random.normal(loc = nyz_mean, scale = 1/np.sqrt(var_one), size = s)
     nxz = np.random.normal(loc = nxz_mean, scale = 1/np.sqrt(var_two), size = s)
 
-    txip = np.where((sy+nyz)>0,np.arctan(-(sy + nyz)/(sx+ nxz)),np.arctan(-(sy + nyz)/(sx+ nxz))+np.pi)
-    txim = np.where((sy-nyz)>0,np.arctan((sy-nyz)/(sx-nxz)),np.arctan((sy-nyz)/(sx-nxz))+np.pi)
+    txip = np.where((sx+nxz)>0,np.arctan(-(sy + nyz)/(sx+ nxz)),np.arctan(-(sy + nyz)/(sx+ nxz))+np.pi)
+    txim = np.where((sx-nxz)>0,np.arctan((sy-nyz)/(sx-nxz)),np.arctan((sy-nyz)/(sx-nxz))+np.pi)
+
 
     a = (sx+nxz)**2/(np.cos(txip))**2
     b = (sx-nxz)**2/(np.cos(txim))**2

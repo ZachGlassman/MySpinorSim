@@ -53,7 +53,7 @@ from numpy.lib import scimath
 import seaborn
 
 #parallel or serial
-cheby_sim = cheby_sim_s
+cheby_sim = cheby_sim_p
 
 def color_text(text, color):
     """Function color text
@@ -152,13 +152,13 @@ class Simulation(object):
         if self.verbose:
             print(color_text('Running Fock State Simulation', 'CYAN'))
             ts = time_mod.time()
-        npairs = self.params['n1']/2
-
+        npairs = int(self.params['n1'])
+        N = self.params['n0'] + self.params['n1'] + self.params['nm1']
         time, n0, n0var, init_norm = fock_sim(self.params['total_time'],
                 self.params['time_step'],
                 self.params['mag_time'],
                 self.params['tauB'],
-                int(self.params['n']),
+                N,
                 self.params['c']*2*np.pi,
                 self.params['magnetic_field'],
                 npairs)
@@ -166,8 +166,8 @@ class Simulation(object):
 
         std = np.sqrt(n0var)
         if not self.number:
-            n0 = n0/self.params['n']
-            std= std/self.params['n']
+            n0 = n0/N
+            std= std/N
         self.fock_res = SimulationResult(time, n0, std, 'red','Fock',init_norm=init_norm)
         self.fock = True
         if self.verbose:
@@ -181,7 +181,7 @@ class Simulation(object):
         if self.verbose:
             print(color_text('Running Mean Field Simulation', 'YELLOW'))
             ts = time_mod.time()
-        
+
         time, mean, std, mw = mean_sim(int(self.params['n1']),
                  int(self.params['n0']),
                  int(self.params['nm1']),
@@ -226,8 +226,10 @@ class Simulation(object):
             n_step = [int(self.params['total_time'][i]/dt[i]) for i in range(len(dt))]
             delta_t = [i for i in self.params['total_time']]
 
+        N = self.params['n0'] + self.params['n1'] + self.params['nm1']
+
         sum_of_means, sum_of_meansq, norm, time = cheby_sim(mag_field,
-                  int(self.params['n']),
+                  int(N),
                   int(self.params['mag']),
                   int(self.params['mag_range']),
                   int(self.params['atom_range']),
@@ -242,7 +244,10 @@ class Simulation(object):
         meansq = sum_of_meansq/norm
         std = np.sqrt(meansq - mean*mean)
         self.cheby = True
-        self.cheby_res = SimulationResult(time, mean,std, 'green', 'Coherent')
+        if self.number:
+            self.cheby_res = SimulationResult(time, mean,std, 'green', 'Coherent')
+        else:
+            self.cheby_res = SimulationResult(time, mean/N,std/N, 'green', 'Coherent')
         if self.verbose:
             te = time_mod.time()
             print('\n',color_text('Finished Coherent Simulation', 'RED'))

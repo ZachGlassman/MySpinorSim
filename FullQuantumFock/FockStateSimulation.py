@@ -80,6 +80,9 @@ def tri_ham(c,bfield,psi,n_atoms):
 
     return ans
 
+def tri_ham2(c,bfield,psi,n_atoms,m):
+    ans = np.empty(len(psi), dtype = complex)
+
 #may need higher precision integration
 def func_to_integrate(yn,t,bfield,c,n_atoms):
     com =  tri_ham(c,bfield,yn,n_atoms)
