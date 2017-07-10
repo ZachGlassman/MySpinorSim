@@ -288,7 +288,7 @@ def single_simulation(N1,N0,Nm1,theta,nsamps,c,tfinal,B,pulses,qu0=0):
 
     return t_interp,m,s,np.mean(ans[:,3],axis=0)
 
-generate_states = generate_states_coherent
+generate_states = generate_states_fock
 if __name__ == '__main__':
     """main function for command line utility, won't usually be used
     in this way
