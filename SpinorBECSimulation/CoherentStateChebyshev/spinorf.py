@@ -110,12 +110,10 @@ def solve_system(b_field, n_tot,mag, mag_range, atom_range,spinor_phase, n_0,
     #now loop over magnetizations to initialize
     for m in trange(mag-mag_range,mag+mag_range+1, desc = 'mag_loop', leave=True):
         norm_for_m = 0
-        for atom_n in trange(n_tot - atom_range, n_tot + atom_range +1, desc = 'atom_loop',leave=True, nested=True):
+        for atom_n in trange(n_tot - atom_range, n_tot + atom_range +1, desc = 'atom_loop',leave=True):
             if atom_n >= abs(m):
                 n_max = find_nmax(atom_n,m)
-
                 e_min,e_max,d,e,first_n0 = setup_scaled_H(eqz + emw[0],c[0],atom_n,m,n_max)
-
                 state = np.zeros(int(n_max), dtype = complex)
                 sum_coef = 0
 
@@ -159,7 +157,7 @@ def solve_system(b_field, n_tot,mag, mag_range, atom_range,spinor_phase, n_0,
                     scaled_dt = 2*np.pi * (e_max - e_min)*dt/2
                     t_local_scaled = 0
 
-                    for i in trange(n_step[interval],desc = 'time_loop',leave=True, nested=True):
+                    for i in trange(n_step[interval],desc = 'time_loop',leave=True):
                         t = t + dt
                         t_local_scaled += scaled_dt
                         state = chebyshev_propagator(scaled_dt,state,n_max,e,d)

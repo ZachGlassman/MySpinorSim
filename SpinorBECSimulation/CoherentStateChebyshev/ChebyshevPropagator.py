@@ -7,11 +7,8 @@ This is will propgate a Hermition matrix with eigenvalues between -1 and 1
 """
 import numpy as np
 from scipy.special import jv
-try:
-    from .hamiltonian import hamiltonian_c
-except:
-    from hamiltonian import hamiltonian_c
-from numba import autojit
+from .hamiltonian import hamiltonian_c
+
 #going to define better multiplication function
 
 
@@ -25,7 +22,6 @@ def dbesj(x, alpha, n):
     #y = len([num for num in bessel_j if abs(num) < 1e-20])
     return bessel_j
 
-@autojit
 def chebyshev_propagator(time_step, psi, n_tot, e, d):
     """propogate function with Chebyshev Propgation"""
     epsilon = 1e-15

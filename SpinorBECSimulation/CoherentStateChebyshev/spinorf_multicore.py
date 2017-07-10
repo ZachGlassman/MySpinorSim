@@ -71,11 +71,10 @@ def calc_m_loop(queue, m, params):
     for atom_n in range(n_tot - atom_range, n_tot + atom_range + 1):
         if atom_n >= abs(m):
             n_max = find_nmax(atom_n, m)
+          
+            e_min, e_max, d, e, first_n0 = setup_scaled_H(eqz + emw[0], c[0], atom_n, m, n_max)
 
-            e_min, e_max, d, e, first_n0 = setup_scaled_H(
-                eqz + emw[0], c[0], atom_n, m, n_max)
-
-            state = np.zeros(n_max, dtype=complex)
+            state = np.zeros(int(n_max), dtype=complex)
             sum_coef = 0
 
             # now loop over j

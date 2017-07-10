@@ -9,9 +9,9 @@ from numba import jit, autojit
 @autojit
 def setup_scaled_H(q, c, n, m, nmaxfinal):
     """function to setup tridigonal Hamiltonian if first, return d,e"""
-    first_n0 = np.mod(n-abs(m),2)
-    n0 = np.mod((n-abs(m)),2)
-    nmax = (n-abs(m)-n0)/2 + 1
+    first_n0 = np.mod(n-abs(m), 2)
+    n0 = np.mod((n-abs(m)), 2)
+    nmax = int((n-abs(m)-n0)/2 + 1)
  
     #create arrays
     e = np.zeros(int(nmax)-1)
