@@ -1,0 +1,249 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ChebyshevPropagator.py	../CoherentStateChebyshev/ChebyshevPropagator.py	1;"	kind:file	line:1
+FockStateDiag.py	../FullQuantumFock/FockStateDiag.py	1;"	kind:file	line:1
+FockStateMinDep.py	../ForCluster/FockStateMinDep.py	1;"	kind:file	line:1
+FockStateMinDep.py	../FullQuantumFock/FockStateMinDep.py	1;"	kind:file	line:1
+FockStateSimulation.py	../FullQuantumFock/FockStateSimulation.py	1;"	kind:file	line:1
+FockStateSimulation_a.py	../FullQuantumFock/FockStateSimulation_a.py	1;"	kind:file	line:1
+MeanFieldSimulation.py	../MeanField/MeanFieldSimulation.py	1;"	kind:file	line:1
+N	../FullQuantumFock/FockStateDiag.py	/^    N = 100$/;"	kind:variable	line:145
+N	../MeanField/MeanFieldSimulation.py	/^    N=10000$/;"	kind:variable	line:300
+N_yz	../MeanField/MeanFieldSimulation.py	/^N_yz = Operator(1j\/np.sqrt(2)* np.array([[0,-1,0],[1,0,1],[0,-1,0]]),r'$N_{yz}$')$/;"	kind:variable	line:214
+Operator	../MeanField/MeanFieldSimulation.py	/^class Operator(object):$/;"	kind:class	line:58
+S_x	../MeanField/MeanFieldSimulation.py	/^S_x = Operator(np.array([[0,1,0],[1,0,1],[0,1,0]])*1\/np.sqrt(2),r'$S_x$')$/;"	kind:variable	line:213
+Simulation	../SimulationRunner.py	/^class Simulation(object):$/;"	kind:class	line:116
+SimulationResult	../SimulationRunner.py	/^class SimulationResult(object):$/;"	kind:class	line:71
+SimulationRunner.py	../SimulationRunner.py	1;"	kind:file	line:1
+__init__	../MeanField/MeanFieldSimulation.py	/^    def __init__(self, mat,rep):$/;"	kind:member	line:60
+__init__	../SimulationRunner.py	/^    def __init__(self, name, pulses = [], number = False):$/;"	kind:member	line:119
+__init__	../SimulationRunner.py	/^    def __init__(self,time,rho_0,std,color, name, init_norm = None):$/;"	kind:member	line:74
+_has_result	../SimulationRunner.py	/^    def _has_result(self):$/;"	kind:member	line:305
+_reset	../SimulationRunner.py	/^    def _reset(self):$/;"	kind:member	line:311
+a_range	../FullQuantumFock/FockStateDiag.py	/^    a_range = 10$/;"	kind:variable	line:146
+alpha_help	../CoherentStateChebyshev/spinorf.py	/^def alpha_help(a,n):$/;"	kind:function	line:20
+alpha_help	../CoherentStateChebyshev/spinorf_multicore.py	/^def alpha_help(a,n):$/;"	kind:function	line:20
+apply	../MeanField/MeanFieldSimulation.py	/^    def apply(self,ele):$/;"	kind:member	line:64
+atom_range	../CoherentStateChebyshev/spinorf.py	/^    atom_range = 2        #AtomRange$/;"	kind:variable	line:190
+atom_range	../CoherentStateChebyshev/spinorf_multicore.py	/^    atom_range = 2        #AtomRange$/;"	kind:variable	line:252
+b_field	../CoherentStateChebyshev/spinorf.py	/^    b_field = 0          #BField in microtesla$/;"	kind:variable	line:186
+b_field	../CoherentStateChebyshev/spinorf_multicore.py	/^    b_field = 0          #BField in microtesla$/;"	kind:variable	line:248
+bcon	../FullQuantumFock/FockStateSimulation.py	/^def bcon(t):$/;"	kind:function	line:40
+bcon	../FullQuantumFock/FockStateSimulation_a.py	/^def bcon(t):$/;"	kind:function	line:25
+bzdot	../FullQuantumFock/FockStateSimulation.py	/^def bzdot(Bz,t,tauB):$/;"	kind:function	line:45
+bzdot	../FullQuantumFock/FockStateSimulation_a.py	/^def bzdot(Bz,t,tauB):$/;"	kind:function	line:30
+c	../CoherentStateChebyshev/spinorf.py	/^    c = [c_init,c_init,c_init]$/;"	kind:variable	line:199
+c	../CoherentStateChebyshev/spinorf_multicore.py	/^    c = [c_init,c_init,c_init]$/;"	kind:variable	line:261
+c_init	../CoherentStateChebyshev/spinorf.py	/^    c_init = 24           #C_init in Hz$/;"	kind:variable	line:193
+c_init	../CoherentStateChebyshev/spinorf_multicore.py	/^    c_init = 24           #C_init in Hz$/;"	kind:variable	line:255
+calc_m_loop	../CoherentStateChebyshev/spinorf_multicore.py	/^def calc_m_loop(queue,m,params):$/;"	kind:function	line:43
+calc_n0_vals	../ForCluster/FockStateMinDep.py	/^def calc_n0_vals(psi,num_atoms):$/;"	kind:function	line:70
+calc_n0_vals	../FullQuantumFock/FockStateDiag.py	/^def calc_n0_vals(psi,num_atoms,m):$/;"	kind:function	line:47
+calc_n0_vals	../FullQuantumFock/FockStateMinDep.py	/^def calc_n0_vals(psi,num_atoms):$/;"	kind:function	line:84
+calc_n0_vals	../FullQuantumFock/FockStateSimulation.py	/^def calc_n0_vals(psi,num_atoms):$/;"	kind:function	line:119
+calc_n0_vals	../FullQuantumFock/FockStateSimulation_a.py	/^def calc_n0_vals(psi,num_atoms):$/;"	kind:function	line:101
+calc_prob	../FullQuantumFock/FockStateDiag.py	/^def calc_prob(n,m,nn,mm):$/;"	kind:function	line:82
+calc_qyz_sqr	../ForCluster/FockStateMinDep.py	/^def calc_qyz_sqr(psi,n):$/;"	kind:function	line:87
+calc_qyz_sqr	../FullQuantumFock/FockStateMinDep.py	/^def calc_qyz_sqr(psi,n):$/;"	kind:function	line:101
+calc_qyz_sqr	../FullQuantumFock/FockStateSimulation.py	/^def calc_qyz_sqr(psi,n):$/;"	kind:function	line:141
+calc_qyz_sqr	../FullQuantumFock/FockStateSimulation_a.py	/^def calc_qyz_sqr(psi,n):$/;"	kind:function	line:123
+calc_state	../FullQuantumFock/FockStateDiag.py	/^def calc_state(n,m,n0,q,c,t_final,t_step):$/;"	kind:function	line:57
+calc_state_with_prob	../FullQuantumFock/FockStateDiag.py	/^def calc_state_with_prob(queue,n,m,n0,q,c,t_final,t_step,prob):$/;"	kind:function	line:69
+calc_sx_sqr	../ForCluster/FockStateMinDep.py	/^def calc_sx_sqr(psi,n):$/;"	kind:function	line:78
+calc_sx_sqr	../FullQuantumFock/FockStateMinDep.py	/^def calc_sx_sqr(psi,n):$/;"	kind:function	line:92
+calc_sx_sqr	../FullQuantumFock/FockStateSimulation.py	/^def calc_sx_sqr(psi,n):$/;"	kind:function	line:129
+calc_sx_sqr	../FullQuantumFock/FockStateSimulation_a.py	/^def calc_sx_sqr(psi,n):$/;"	kind:function	line:111
+calculate_magnetic_field	../FullQuantumFock/FockStateSimulation.py	/^def calculate_magnetic_field(total_time,dt,tauB):$/;"	kind:function	line:48
+calculate_magnetic_field	../FullQuantumFock/FockStateSimulation_a.py	/^def calculate_magnetic_field(total_time,dt,tauB):$/;"	kind:function	line:33
+cheby_sim	../SimulationRunner.py	/^cheby_sim = cheby_sim_p$/;"	kind:variable	line:56
+chebyshev_propagator	../CoherentStateChebyshev/ChebyshevPropagator.py	/^def chebyshev_propagator(time_step, psi, n_tot, e, d):$/;"	kind:function	line:29
+color_text	../SimulationRunner.py	/^def color_text(text, color):$/;"	kind:function	line:58
+compute_coherent_state	../FullQuantumFock/FockStateDiag.py	/^def compute_coherent_state(n,m,n0,q,c,t_final,t_step,a_range,mag_range):$/;"	kind:function	line:92
+compute_coherent_state_multi	../FullQuantumFock/FockStateDiag.py	/^def compute_coherent_state_multi(n,m,n0,q,c,t_final,t_step,a_range,mag_range):$/;"	kind:function	line:112
+compute_evolution	../FullQuantumFock/FockStateDiag.py	/^def compute_evolution(psi_init,e,v,t_final,t_step):$/;"	kind:function	line:27
+create_init_state	../ForCluster/FockStateMinDep.py	/^def create_init_state(n_atoms):$/;"	kind:function	line:62
+create_init_state	../FullQuantumFock/FockStateMinDep.py	/^def create_init_state(n_atoms):$/;"	kind:function	line:76
+create_init_state	../FullQuantumFock/FockStateSimulation.py	/^def create_init_state(n_atoms,pairs = 0):$/;"	kind:function	line:103
+create_init_state	../FullQuantumFock/FockStateSimulation_a.py	/^def create_init_state(n_atoms):$/;"	kind:function	line:85
+data	../CoherentStateChebyshev/simulation_plotter.py	/^data = np.zeros((len(data_in[ind+1:]),4))$/;"	kind:variable	line:19
+data	../MeanField/MeanFieldSimulation.py	/^    data= single_simulation(N,100,24*np.pi*4,tf,.1,pulses1)$/;"	kind:variable	line:302
+data_in	../CoherentStateChebyshev/simulation_plotter.py	/^    data_in = fp.readlines()$/;"	kind:variable	line:14
+dbesj	../CoherentStateChebyshev/ChebyshevPropagator.py	/^def dbesj(x, alpha, n):$/;"	kind:function	line:18
+default	../ForCluster/FockStateMinDep.py	/^                        default='name',$/;"	kind:variable	line:160
+default	../ForCluster/FockStateMinDep.py	/^                        default=-5,$/;"	kind:variable	line:180
+default	../ForCluster/FockStateMinDep.py	/^                        default=.004e-4,$/;"	kind:variable	line:185
+default	../ForCluster/FockStateMinDep.py	/^                        default=0.2,$/;"	kind:variable	line:170
+default	../ForCluster/FockStateMinDep.py	/^                        default=30,$/;"	kind:variable	line:175
+default	../ForCluster/FockStateMinDep.py	/^                        default=40000,$/;"	kind:variable	line:165
+default	../FullQuantumFock/FockStateMinDep.py	/^                        default='name',$/;"	kind:variable	line:206
+default	../FullQuantumFock/FockStateMinDep.py	/^                        default=-5,$/;"	kind:variable	line:226
+default	../FullQuantumFock/FockStateMinDep.py	/^                        default=.004e-4,$/;"	kind:variable	line:231
+default	../FullQuantumFock/FockStateMinDep.py	/^                        default=0.2,$/;"	kind:variable	line:216
+default	../FullQuantumFock/FockStateMinDep.py	/^                        default=30,$/;"	kind:variable	line:221
+default	../FullQuantumFock/FockStateMinDep.py	/^                        default=40000,$/;"	kind:variable	line:211
+delta_t	../CoherentStateChebyshev/spinorf.py	/^    delta_t= [0.04,0.001,0.06]$/;"	kind:variable	line:198
+delta_t	../CoherentStateChebyshev/spinorf_multicore.py	/^    delta_t= [0.04,0.001,0.06]$/;"	kind:variable	line:260
+dest	../ForCluster/FockStateMinDep.py	/^                        dest= 'num_atoms',$/;"	kind:variable	line:164
+dest	../ForCluster/FockStateMinDep.py	/^                        dest='c',$/;"	kind:variable	line:174
+dest	../ForCluster/FockStateMinDep.py	/^                        dest='dt',$/;"	kind:variable	line:184
+dest	../ForCluster/FockStateMinDep.py	/^                        dest='name',$/;"	kind:variable	line:159
+dest	../ForCluster/FockStateMinDep.py	/^                        dest='q',$/;"	kind:variable	line:179
+dest	../ForCluster/FockStateMinDep.py	/^                        dest='total_time',$/;"	kind:variable	line:169
+dest	../FullQuantumFock/FockStateMinDep.py	/^                        dest= 'num_atoms',$/;"	kind:variable	line:210
+dest	../FullQuantumFock/FockStateMinDep.py	/^                        dest='c',$/;"	kind:variable	line:220
+dest	../FullQuantumFock/FockStateMinDep.py	/^                        dest='dt',$/;"	kind:variable	line:230
+dest	../FullQuantumFock/FockStateMinDep.py	/^                        dest='name',$/;"	kind:variable	line:205
+dest	../FullQuantumFock/FockStateMinDep.py	/^                        dest='q',$/;"	kind:variable	line:225
+dest	../FullQuantumFock/FockStateMinDep.py	/^                        dest='total_time',$/;"	kind:variable	line:215
+e	../FullQuantumFock/FockStateSimulation.py	/^    e = time.time()$/;"	kind:variable	line:254
+e	../FullQuantumFock/FockStateSimulation_a.py	/^    e = time.time()$/;"	kind:variable	line:196
+emw	../CoherentStateChebyshev/spinorf.py	/^    emw = [-2.5,-426,-2.5]$/;"	kind:variable	line:200
+emw	../CoherentStateChebyshev/spinorf_multicore.py	/^    emw = [-2.5,-426,-2.5]$/;"	kind:variable	line:262
+end	../CoherentStateChebyshev/spinorf.py	/^    end = timemod.time()$/;"	kind:variable	line:208
+end	../CoherentStateChebyshev/spinorf_multicore.py	/^    end = timemod.time()$/;"	kind:variable	line:270
+f	../MeanField/MeanFieldSimulation.py	/^def f(t,y,B,p1,p0,pm1,qu1,qu0,qum1,q1,q0,qm1,c):$/;"	kind:function	line:25
+filename	../CoherentStateChebyshev/simulation_plotter.py	/^filename = 'results.txt'$/;"	kind:variable	line:10
+filename	../CoherentStateChebyshev/simulation_plotter.py	/^filename = 'results_multi.txt'$/;"	kind:variable	line:11
+filename	../CoherentStateChebyshev/spinorf.py	/^    filename = 'results.txt'$/;"	kind:variable	line:194
+filename	../CoherentStateChebyshev/spinorf_multicore.py	/^    filename = 'results.txt'$/;"	kind:variable	line:256
+find_nmax	../CoherentStateChebyshev/spinorf.py	/^def find_nmax(tot,m):$/;"	kind:function	line:16
+find_nmax	../CoherentStateChebyshev/spinorf_multicore.py	/^def find_nmax(tot,m):$/;"	kind:function	line:16
+find_norm	../CoherentStateChebyshev/spinorf.py	/^def find_norm(z):$/;"	kind:function	line:35
+find_norm	../CoherentStateChebyshev/spinorf_multicore.py	/^def find_norm(z):$/;"	kind:function	line:35
+find_phase	../MeanField/MeanFieldSimulation.py	/^def find_phase(ele):$/;"	kind:function	line:67
+fock_sim	../ForCluster/FockStateMinDep.py	/^def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):$/;"	kind:function	line:100
+fock_sim	../FullQuantumFock/FockStateMinDep.py	/^def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf):$/;"	kind:function	line:114
+fock_sim	../FullQuantumFock/FockStateSimulation.py	/^def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf,npairs):$/;"	kind:function	line:155
+fock_sim	../FullQuantumFock/FockStateSimulation_a.py	/^def fock_sim(total_time,dt,mag_time,tauB,n_atoms,c, bf, pulse_times):$/;"	kind:function	line:137
+fock_sim_fast	../FullQuantumFock/FockStateMinDep.py	/^def fock_sim_fast(total_time,dt,mag_time,tauB,n_atoms,c, bf):$/;"	kind:function	line:139
+func	../FullQuantumFock/FockStateSimulation.py	/^    def func(yn,t):$/;"	kind:function	line:55
+func	../FullQuantumFock/FockStateSimulation_a.py	/^    def func(yn,t):$/;"	kind:function	line:40
+func_to_integrate	../ForCluster/FockStateMinDep.py	/^def func_to_integrate(yn,t,bfield,c,n_atoms):$/;"	kind:function	line:46
+func_to_integrate	../FullQuantumFock/FockStateMinDep.py	/^def func_to_integrate(yn,t,bfield,c,n_atoms):$/;"	kind:function	line:60
+func_to_integrate	../FullQuantumFock/FockStateSimulation.py	/^def func_to_integrate(yn,t,bfield,c,n_atoms):$/;"	kind:function	line:87
+func_to_integrate	../FullQuantumFock/FockStateSimulation_a.py	/^def func_to_integrate(t,y,bfield,c,n_atoms):$/;"	kind:function	line:69
+generate_hamiltonian	../FullQuantumFock/FockStateDiag.py	/^def generate_hamiltonian(n,m,n0,q,c):$/;"	kind:function	line:8
+generate_states	../MeanField/MeanFieldSimulation.py	/^generate_states = generate_states_coherent$/;"	kind:variable	line:291
+generate_states_coherent	../MeanField/MeanFieldSimulation.py	/^def generate_states_coherent(N1,N0,Nm1,theta,nsamps):$/;"	kind:function	line:72
+generate_states_fock	../MeanField/MeanFieldSimulation.py	/^def generate_states_fock(N1,N0,Nm1,theta,s):$/;"	kind:function	line:88
+get_bfield	../FullQuantumFock/FockStateSimulation.py	/^def get_bfield(bfield,b_steps,step):$/;"	kind:function	line:108
+get_bfield	../FullQuantumFock/FockStateSimulation_a.py	/^def get_bfield(bfield,b_steps,step):$/;"	kind:function	line:90
+get_exp_values	../MeanField/MeanFieldSimulation.py	/^def get_exp_values(ans,step_size):$/;"	kind:function	line:218
+get_initial_state	../FullQuantumFock/FockStateDiag.py	/^def get_initial_state(n,m,n0):$/;"	kind:function	line:39
+get_q	../MeanField/MeanFieldSimulation.py	/^def get_q(qt,val,qu1,qu0,qum1):$/;"	kind:function	line:130
+hamiltonian.py	../CoherentStateChebyshev/hamiltonian.py	1;"	kind:file	line:1
+hamiltonian_c	../CoherentStateChebyshev/hamiltonian.py	/^def hamiltonian_c(n_max, in_w, e, d):$/;"	kind:function	line:58
+heaviside	../FullQuantumFock/FockStateSimulation.py	/^def heaviside(x):$/;"	kind:function	line:36
+heaviside	../FullQuantumFock/FockStateSimulation_a.py	/^def heaviside(x):$/;"	kind:function	line:21
+help	../ForCluster/FockStateMinDep.py	/^                        help = "number of atoms")$/;"	kind:variable	line:167
+help	../ForCluster/FockStateMinDep.py	/^                        help = 'c')$/;"	kind:variable	line:177
+help	../ForCluster/FockStateMinDep.py	/^                        help = 'path and name of simulation')$/;"	kind:variable	line:162
+help	../ForCluster/FockStateMinDep.py	/^                        help = 'q')$/;"	kind:variable	line:182
+help	../ForCluster/FockStateMinDep.py	/^                        help = 'time step')$/;"	kind:variable	line:187
+help	../ForCluster/FockStateMinDep.py	/^                        help = 'total_time')$/;"	kind:variable	line:172
+help	../FullQuantumFock/FockStateMinDep.py	/^                        help = "number of atoms")$/;"	kind:variable	line:213
+help	../FullQuantumFock/FockStateMinDep.py	/^                        help = 'c')$/;"	kind:variable	line:223
+help	../FullQuantumFock/FockStateMinDep.py	/^                        help = 'name of simulation')$/;"	kind:variable	line:208
+help	../FullQuantumFock/FockStateMinDep.py	/^                        help = 'q')$/;"	kind:variable	line:228
+help	../FullQuantumFock/FockStateMinDep.py	/^                        help = 'time step')$/;"	kind:variable	line:233
+help	../FullQuantumFock/FockStateMinDep.py	/^                        help = 'total_time')$/;"	kind:variable	line:218
+ind	../CoherentStateChebyshev/simulation_plotter.py	/^ind = data_in.index('{:<15}{:<15}{:<15}{:<15}\\n'.format('t(s)','mean','stddev','norm'))$/;"	kind:variable	line:17
+init_state_solver	../CoherentStateChebyshev/spinorf.py	/^    init_state_solver = 'coherent_state'$/;"	kind:variable	line:183
+init_state_solver	../CoherentStateChebyshev/spinorf_multicore.py	/^    init_state_solver = 'coherent_state'$/;"	kind:variable	line:245
+m_range	../FullQuantumFock/FockStateDiag.py	/^    m_range = 10$/;"	kind:variable	line:147
+mag	../CoherentStateChebyshev/spinorf.py	/^    mag = 0                 #Magnetization$/;"	kind:variable	line:188
+mag	../CoherentStateChebyshev/spinorf_multicore.py	/^    mag = 0                 #Magnetization$/;"	kind:variable	line:250
+mag_range	../CoherentStateChebyshev/spinorf.py	/^    mag_range = 2           #MagRange$/;"	kind:variable	line:189
+mag_range	../CoherentStateChebyshev/spinorf_multicore.py	/^    mag_range = 2           #MagRange$/;"	kind:variable	line:251
+main	../ForCluster/FockStateMinDep.py	/^def main(args):$/;"	kind:function	line:140
+main	../FullQuantumFock/FockStateMinDep.py	/^def main(args):$/;"	kind:function	line:186
+main	../SimulationRunner.py	/^def main(config,args):$/;"	kind:function	line:380
+moments	../CoherentStateChebyshev/hamiltonian.py	/^def moments(wave,n):$/;"	kind:function	line:80
+msqr	../MeanField/MeanFieldSimulation.py	/^def msqr(x):$/;"	kind:function	line:21
+n_0	../CoherentStateChebyshev/spinorf.py	/^    n_0 = n_tot-2          #N_0 numbers tarting in m=0$/;"	kind:variable	line:192
+n_0	../CoherentStateChebyshev/spinorf_multicore.py	/^    n_0 = n_tot-2          #N_0 numbers tarting in m=0$/;"	kind:variable	line:254
+n_step	../CoherentStateChebyshev/spinorf.py	/^    n_step = [30,6,30]$/;"	kind:variable	line:201
+n_step	../CoherentStateChebyshev/spinorf_multicore.py	/^    n_step = [30,6,30]$/;"	kind:variable	line:263
+n_tot	../CoherentStateChebyshev/spinorf.py	/^    n_tot = 2000            #TotalAtomNumber$/;"	kind:variable	line:187
+n_tot	../CoherentStateChebyshev/spinorf_multicore.py	/^    n_tot = 2000            #TotalAtomNumber$/;"	kind:variable	line:249
+ndiv	../CoherentStateChebyshev/spinorf.py	/^    ndiv = 3$/;"	kind:variable	line:197
+ndiv	../CoherentStateChebyshev/spinorf_multicore.py	/^    ndiv = 3$/;"	kind:variable	line:259
+nop	../MeanField/MeanFieldSimulation.py	/^    nop = []$/;"	kind:variable	line:299
+parser	../ForCluster/FockStateMinDep.py	/^    parser = argparse.ArgumentParser()$/;"	kind:variable	line:157
+parser	../FullQuantumFock/FockStateMinDep.py	/^    parser = argparse.ArgumentParser()$/;"	kind:variable	line:203
+plot	../SimulationRunner.py	/^    def plot(self, ax):$/;"	kind:member	line:83
+plot	../SimulationRunner.py	/^    def plot(self, col = False, region=False):$/;"	kind:member	line:257
+plot_no_color	../SimulationRunner.py	/^    def plot_no_color(self, ax, col):$/;"	kind:member	line:92
+plot_ryan	../SimulationRunner.py	/^    def plot_ryan(self, ax):$/;"	kind:member	line:88
+print_information	../SimulationRunner.py	/^    def print_information(self):$/;"	kind:member	line:109
+propogate	../CoherentStateChebyshev/spinorf.py	/^    propogate = 'Chebychev'$/;"	kind:variable	line:184
+propogate	../CoherentStateChebyshev/spinorf_multicore.py	/^    propogate = 'Chebychev'$/;"	kind:variable	line:246
+pulses1	../MeanField/MeanFieldSimulation.py	/^    pulses1 = [[.04,.001,'MW','0',-426*np.pi]]$/;"	kind:variable	line:298
+q_to_b	../SimulationRunner.py	/^def q_to_b(q):$/;"	kind:function	line:113
+q_to_bf	../ForCluster/FockStateMinDep.py	/^def q_to_bf(q):$/;"	kind:function	line:124
+q_to_bf	../FullQuantumFock/FockStateMinDep.py	/^def q_to_bf(q):$/;"	kind:function	line:170
+results	../ForCluster/FockStateMinDep.py	/^    results = parser.parse_args()$/;"	kind:variable	line:188
+results	../FullQuantumFock/FockStateMinDep.py	/^    results = parser.parse_args()$/;"	kind:variable	line:234
+rf	../MeanField/MeanFieldSimulation.py	/^def rf(t,y,sigma,dm,dp):$/;"	kind:function	line:36
+rho_0	../MeanField/MeanFieldSimulation.py	/^rho_0 = Operator(np.array([[0,0,0],[0,1,0],[0,0,0]]),r'$\\rho_0$')$/;"	kind:variable	line:215
+run_cheby	../SimulationRunner.py	/^    def run_cheby(self,save = False):$/;"	kind:member	line:207
+run_fock	../SimulationRunner.py	/^    def run_fock(self):$/;"	kind:member	line:150
+run_mean	../SimulationRunner.py	/^    def run_mean(self):$/;"	kind:member	line:179
+s	../FullQuantumFock/FockStateSimulation.py	/^    s = time.time()$/;"	kind:variable	line:252
+s	../FullQuantumFock/FockStateSimulation_a.py	/^    s = time.time()$/;"	kind:variable	line:194
+save	../SimulationRunner.py	/^    def save(self, name):$/;"	kind:member	line:96
+set_up_simulation	../ForCluster/FockStateMinDep.py	/^def set_up_simulation(total_time,dt,tauB,mag_time,c,n_atoms):$/;"	kind:function	line:51
+set_up_simulation	../FullQuantumFock/FockStateMinDep.py	/^def set_up_simulation(total_time,dt,tauB,mag_time,c,n_atoms):$/;"	kind:function	line:65
+set_up_simulation	../FullQuantumFock/FockStateSimulation.py	/^def set_up_simulation(total_time,dt,tauB,mag_time,c,n_atoms):$/;"	kind:function	line:91
+set_up_simulation	../FullQuantumFock/FockStateSimulation_a.py	/^def set_up_simulation(total_time,dt,tauB,mag_time,c,n_atoms):$/;"	kind:function	line:73
+setup_scaled_H	../CoherentStateChebyshev/hamiltonian.py	/^def setup_scaled_H(q, c, n, m, nmaxfinal):$/;"	kind:function	line:10
+simulation_params	../FullQuantumFock/FockStateSimulation.py	/^    simulation_params = {$/;"	kind:variable	line:243
+simulation_params	../FullQuantumFock/FockStateSimulation_a.py	/^    simulation_params = {$/;"	kind:variable	line:185
+simulation_plotter.py	../CoherentStateChebyshev/simulation_plotter.py	1;"	kind:file	line:1
+single_simulation	../MeanField/MeanFieldSimulation.py	/^def single_simulation(N1,N0,Nm1,theta,nsamps,c,tfinal,B,pulses,qu0=0):$/;"	kind:function	line:230
+single_simulation	../SimulationRunner.py	/^def single_simulation(config, args):$/;"	kind:function	line:318
+solve_system	../CoherentStateChebyshev/spinorf.py	/^def solve_system(b_field, n_tot,mag, mag_range, atom_range,spinor_phase, n_0,$/;"	kind:function	line:83
+solve_system	../CoherentStateChebyshev/spinorf_multicore.py	/^def solve_system(b_field, n_tot,mag, mag_range, atom_range,spinor_phase, n_0,$/;"	kind:function	line:168
+solve_system	../MeanField/MeanFieldSimulation.py	/^def solve_system(y0, B, p1, p0, pm1,qu1,qu0,qum1,q1,q0,qm1,c,pulses,tfinal):$/;"	kind:function	line:141
+species	../CoherentStateChebyshev/spinorf.py	/^    species = 'Na'$/;"	kind:variable	line:185
+species	../CoherentStateChebyshev/spinorf_multicore.py	/^    species = 'Na'$/;"	kind:variable	line:247
+spinor_phase	../CoherentStateChebyshev/spinorf.py	/^    spinor_phase =0      #SpinorPhase$/;"	kind:variable	line:191
+spinor_phase	../CoherentStateChebyshev/spinorf_multicore.py	/^    spinor_phase =0      #SpinorPhase$/;"	kind:variable	line:253
+spinorf.py	../CoherentStateChebyshev/spinorf.py	1;"	kind:file	line:1
+spinorf_multicore.py	../CoherentStateChebyshev/spinorf_multicore.py	1;"	kind:file	line:1
+start	../CoherentStateChebyshev/spinorf.py	/^    start = timemod.time()$/;"	kind:variable	line:202
+start	../CoherentStateChebyshev/spinorf_multicore.py	/^    start = timemod.time()$/;"	kind:variable	line:264
+te	../FullQuantumFock/FockStateDiag.py	/^    te = time.time()$/;"	kind:variable	line:155
+tf	../MeanField/MeanFieldSimulation.py	/^    tf = .1$/;"	kind:variable	line:301
+tm	../FullQuantumFock/FockStateDiag.py	/^    tm = time.time()$/;"	kind:variable	line:152
+transform_q	../SimulationRunner.py	/^    def transform_q(self):$/;"	kind:member	line:147
+tri_ham	../ForCluster/FockStateMinDep.py	/^def tri_ham(c,bfield,y,n_atoms):$/;"	kind:function	line:32
+tri_ham	../FullQuantumFock/FockStateMinDep.py	/^def tri_ham(c,bfield,y,n_atoms):$/;"	kind:function	line:46
+tri_ham	../FullQuantumFock/FockStateSimulation.py	/^def tri_ham(c,bfield,psi,n_atoms):$/;"	kind:function	line:68
+tri_ham	../FullQuantumFock/FockStateSimulation_a.py	/^def tri_ham(c,bfield,psi,n_atoms):$/;"	kind:function	line:53
+tri_ham2	../FullQuantumFock/FockStateSimulation.py	/^def tri_ham2(c,bfield,psi,n_atoms,m):$/;"	kind:function	line:83
+tri_ham_np	../FullQuantumFock/FockStateMinDep.py	/^def tri_ham_np(t,y,c,bfield,n_atoms):$/;"	kind:function	line:33
+ts	../FullQuantumFock/FockStateDiag.py	/^    ts = time.time()$/;"	kind:variable	line:150
+type	../ForCluster/FockStateMinDep.py	/^                        type = int,$/;"	kind:variable	line:166
+type	../ForCluster/FockStateMinDep.py	/^                        type=float,$/;"	kind:variable	line:171
+type	../ForCluster/FockStateMinDep.py	/^                        type=float,$/;"	kind:variable	line:176
+type	../ForCluster/FockStateMinDep.py	/^                        type=float,$/;"	kind:variable	line:181
+type	../ForCluster/FockStateMinDep.py	/^                        type=float,$/;"	kind:variable	line:186
+type	../ForCluster/FockStateMinDep.py	/^                        type=str,$/;"	kind:variable	line:161
+type	../FullQuantumFock/FockStateMinDep.py	/^                        type = int,$/;"	kind:variable	line:212
+type	../FullQuantumFock/FockStateMinDep.py	/^                        type=float,$/;"	kind:variable	line:217
+type	../FullQuantumFock/FockStateMinDep.py	/^                        type=float,$/;"	kind:variable	line:222
+type	../FullQuantumFock/FockStateMinDep.py	/^                        type=float,$/;"	kind:variable	line:227
+type	../FullQuantumFock/FockStateMinDep.py	/^                        type=float,$/;"	kind:variable	line:232
+type	../FullQuantumFock/FockStateMinDep.py	/^                        type=str,$/;"	kind:variable	line:207
+write_out	../CoherentStateChebyshev/spinorf.py	/^def write_out(filename, b_field, n_0, c_init, n_tot, mag, mag_range, atom_range,$/;"	kind:function	line:42
+write_out	../CoherentStateChebyshev/spinorf_multicore.py	/^def write_out(filename, b_field, n_0, c_init, n_tot, mag, mag_range, atom_range,$/;"	kind:function	line:127
+write_out	../ForCluster/FockStateMinDep.py	/^def write_out(name,sim_pars,q,t,n0,std):$/;"	kind:function	line:127
+write_out	../FullQuantumFock/FockStateMinDep.py	/^def write_out(name,sim_pars,q,t,n0,std):$/;"	kind:function	line:173
+ynplus1	../ForCluster/FockStateMinDep.py	/^def ynplus1(func, yn,t,dt,**kwargs):$/;"	kind:function	line:18
+ynplus1	../FullQuantumFock/FockStateMinDep.py	/^def ynplus1(func, yn,t,dt,**kwargs):$/;"	kind:function	line:19
+ynplus1	../FullQuantumFock/FockStateSimulation.py	/^def ynplus1(func, yn,t,dt,**kwargs):$/;"	kind:function	line:19
