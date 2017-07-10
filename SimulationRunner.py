@@ -48,10 +48,10 @@ from numpy.lib import scimath
 import numpy as np
 import matplotlib.pyplot as plt
 
-from MeanField.MeanFieldSimulation import single_simulation as mean_sim
-from FullQuantumFock.FockStateSimulation import fock_sim
-from CoherentStateChebyshev.spinorf import solve_system as cheby_sim_s
-from CoherentStateChebyshev.spinorf_multicore import solve_system as cheby_sim_p
+from SpinorBECSimulation.MeanField.MeanFieldSimulation import single_simulation as mean_sim
+from SpinorBECSimulation.FullQuantumFock.FockStateSimulation import fock_sim
+from SpinorBECSimulation.CoherentStateChebyshev.spinorf import solve_system as cheby_sim_s
+from SpinorBECSimulation.CoherentStateChebyshev.spinorf_multicore import solve_system as cheby_sim_p
 
 #parallel or serial
 cheby_sim = cheby_sim_p
