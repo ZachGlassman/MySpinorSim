@@ -13,9 +13,25 @@ from .hamiltonian import hamiltonian_c
 
 
 def dbesj(x, alpha, n):
-    """sequence of bessel functions where n is the number of elements of a
-    bessel function of J_(alpha + k -1)(x) where k = 1...n
-    Don't return a y value since we don't use it, will improve performance
+    """sequence of bessel functions where n is the number of elements of a bessel function of
+    
+    .. math::
+        J_{\\alpha + k -1}(x)
+    
+    where k = 1...n
+    
+    Parameters
+    ----------
+    x : np.array(float)
+        array of numbers
+    alpha : int
+        order of function
+    n : int
+        class of Bessel Function
+    Returns
+    -------
+    bessel_j : np.array(float)
+        array of bessel functions
     """
     k = np.arange(0,n+1,1) + alpha
     bessel_j = jv(k,x)
@@ -23,7 +39,12 @@ def dbesj(x, alpha, n):
     return bessel_j
 
 def chebyshev_propagator(time_step, psi, n_tot, e, d):
-    """propogate function with Chebyshev Propgation"""
+    """propogate function with Chebyshev Propgation
+    
+    Parameters
+    ----------
+    
+    """
     epsilon = 1e-15
     #estimate upper bound with asymptotic form
     chebyshev_order = int(time_step) + 5

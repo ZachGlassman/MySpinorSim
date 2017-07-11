@@ -40,7 +40,7 @@ It will provide a unified plotting interface and variable interface
 # uncomment if using only terminal access
 #import matplotlib
 # matplotlib.use('Agg')
-
+import os
 import time as time_mod
 import configparser
 import argparse
@@ -82,6 +82,7 @@ class SimulationResult(object):
         self.col = color
         self.q = False
         self.init_norm = init_norm
+        self.plot_label =os.path.basename(self.name)
 
     def plot(self, ax):
         """plot given axis ax"""
@@ -90,26 +91,27 @@ class SimulationResult(object):
         ax.plot(self.t, self.rho, label=self.name, color=self.col)
 
     def plot_ryan(self, ax):
-        ax.plot(self.t, self.rho, label=self.name, color=self.col)
-        ax.plot(self.t, self.std, label=self.name +
+        ax.plot(self.t, self.rho, label=self.plot_label, color=self.col)
+        ax.plot(self.t, self.std, label=self.plot_label +
                 'std', color=self.col, linestyle='--')
 
     def plot_no_color(self, ax, col):
-        ax.plot(self.t, self.rho, label=self.name, color=col)
-        ax.plot(self.t, self.std, label=self.name +
+        ax.plot(self.t, self.rho, label=self.plot_label, color=col)
+        ax.plot(self.t, self.std, label=self.plot_label +
                 'std', color=col, linestyle='--')
 
     def save(self, name):
         """function to save results to file"""
+        filename = '{0}_{1}_results.txt'.format(self.name, name)
         try:
-            with open('{0}_{1}_results.txt'.format(name, self.name), 'w') as f:
+            with open(filename, 'w') as f:
                 f.write('{0:10}{1:10}{2:10}{3:10}\n'.format(
                     'Time', 'Mean', 'STD', 'NORM'))
                 for i, time in enumerate(self.t):
                     f.write('{:<20.8f}{:<20.8f}{:<20.8f}{:<20.8f}\n'.format(
                         time, self.rho[i], self.std[i], self.init_norm[i]))
         except:
-            with open('{0}_{1}_results.txt'.format(name, self.name), 'w') as f:
+            with open(filename, 'w') as f:
                 f.write('{0:10}{1:10}{2:10}\n'.format('Time', 'Mean', 'STD'))
                 for i, time in enumerate(self.t):
                     f.write('{:<20.8f}{:<20.8f}{:<20.8f}\n'.format(
@@ -128,9 +130,10 @@ class Simulation(object):
     """Simulation Class is a simulation for a certain set of parameters
     Will automatically use correct factors to compare to real vales"""
 
-    def __init__(self, name, pulses=[], number=False):
+    def __init__(self, name, savepath, pulses=[], number=False):
         """Inititalize name and all possible parameters set to reasonable values"""
         self.name = name
+        self.savepath = savepath
         self.params = {
             'n': 5000,
             'c': 24,
@@ -180,7 +183,7 @@ class Simulation(object):
             n0 = n0 / N
             std = std / N
         self.fock_res = SimulationResult(
-            time, n0, std, 'red', 'Fock', init_norm=init_norm)
+            time, n0, std, 'red', os.path.join(self.savepath,'Fock'), init_norm=init_norm)
         self.fock = True
         if self.verbose:
             te = time_mod.time()
@@ -209,7 +212,7 @@ class Simulation(object):
             N = self.params['n0'] + self.params['n1'] + self.params['nm1']
             mean = mean * N
             std = std * N
-        self.mean_res = SimulationResult(time, mean, std, 'blue', 'Mean')
+        self.mean_res = SimulationResult(time, mean, std, 'blue', os.path.join(self.savepath,'Mean'))
         self.mean = True
         if self.verbose:
             te = time_mod.time()
@@ -258,12 +261,13 @@ class Simulation(object):
         meansq = sum_of_meansq / norm
         std = np.sqrt(meansq - mean * mean)
         self.cheby = True
+        name_ = os.path.join(self.savepath, 'Coherent')
         if self.number:
             self.cheby_res = SimulationResult(
-                time, mean, std, 'green', 'Coherent')
+                time, mean, std, 'green', name_)
         else:
             self.cheby_res = SimulationResult(
-                time, mean / N, std / N, 'green', 'Coherent')
+                time, mean / N, std / N, 'green', name_)
         if self.verbose:
             te = time_mod.time()
             print('\n', color_text('Finished Coherent Simulation', 'RED'))
@@ -337,7 +341,8 @@ def single_simulation(config, args):
     cscp = 'Coherent State Chebyshev Parameters'
     # create simulation objects
     name = config[sims].get('Name', 'sim')
-    s = Simulation(name)
+    savepath = config[sims].get("Savepath",'')
+    s = Simulation(name, savepath)
     if args.verbose == True:
         s.verbose = True
     # loop through each one
@@ -383,7 +388,7 @@ def single_simulation(config, args):
     if config[sims].getboolean('plot', True):
         s.plot()
         print('Saving Figure', '{0}_plot.pdf'.format(s.name))
-        plt.savefig('{0}_plot.pdf'.format(s.name))
+        plt.savefig('{0}_plot.pdf'.format(os.path.join(savepath, s.name)))
         plt.show()
 
     if args.verbose == True:
@@ -410,6 +415,7 @@ if __name__ == '__main__':
                         action='store',
                         help='Path to config file',
                         required=True)
+                        
     args = parser.parse_args()
     # get configuration
     config = configparser.ConfigParser()

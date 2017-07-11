@@ -1,14 +1,41 @@
 # -*- coding: utf-8 -*-
 """
-Spyder Editor
 Hamiltonian functions
 """
 import numpy as np
-from numba import jit, autojit
+import numba
 
-@autojit
+@numba.jit
 def setup_scaled_H(q, c, n, m, nmaxfinal):
-    """function to setup tridigonal Hamiltonian if first, return d,e"""
+    """function to setup tridigonal Hamiltonian if first, return d,e
+    
+    Parameters
+    ----------
+    q : float
+        quadratic zeeman shift
+    c : float
+        c_2n, spinor interaction rate
+    n : int
+        number of particles
+    m : int
+        magnetization
+    nmaxfinal : int
+        deprecated
+        
+    Returns
+    -------
+    e_min : float
+        minimum eigenvalue
+    e_max : float
+        maximum eigenvalue
+    d : np.array(complex)
+        diagonal elements of Hamiltonian
+    e : np.array(complex)
+        off diagonal elements of Hamiltonian
+    first_n0 : int
+        n-|m| % 2
+    
+    """
     first_n0 = np.mod(n-abs(m), 2)
     n0 = np.mod((n-abs(m)), 2)
     nmax = int((n-abs(m)-n0)/2 + 1)
@@ -54,38 +81,67 @@ def setup_scaled_H(q, c, n, m, nmaxfinal):
     e = np.multiply(radius,e)
     return e_min, e_max ,d ,e, first_n0
  
-@autojit
+@numba.jit
 def hamiltonian_c(n_max, in_w, e, d):
     """apply tridiagonal real Hamiltonian matrix to a complex vector
-    different from Arne in that we pass in e,d"""
-   
-    out_w = np.zeros(len(in_w), dtype = complex)
+    
+    Parameters
+    ----------
+    n_max : int
+        maximum n for cutoff
+    in_w : np.array(complex)
+        state in
+    d : np.array(complex)
+        diagonal elements of Hamiltonian
+    e : np.array(complex)
+        off diagonal elements of Hamiltonian
+    
+    Returns
+    -------
+    out_w : np.array(complex)
+        application of Hamiltonian to vector
+    """
+    n_max = int(n_max)
+    out_w = np.zeros(len(in_w), dtype=complex)
     
     for i in range(n_max):
         out_w[i] = in_w[i]*d[i]
     
     j = 1
-    for i in range(int(n_max)-1):
+    for i in range(n_max-1):
         out_w[i] = out_w[i] + e[i]*in_w[j]
         j = j + 1
 
     i = 0
-    for j in range(1,int(n_max)):
+    for j in range(1,n_max):
         out_w[j] = out_w[j] + e[i] * in_w[i]
         i = i + 1
         
     return out_w
 
-@autojit
-def moments(wave,n):
-    """take a complex wave and return mean and variance
-    for each element take mag squared and compute mean
-    where n is first_n0_element"""
+@numba.jit
+def moments(wave, n):
+    """mean and variance of wavefunction
+    
+    Parameters
+    ----------
+    wave : np.array(complex)
+        wavefunction
+    n : int
+        number of atoms
+    
+    Returns
+    -------
+    x : float
+        mean of wavefunction
+    x2 : float
+        variance of wavefunction
+    """
     #epsilon  = 1e-200
     x =0
     x2 = 0
     for i in range(len(wave)):
-        Y = abs(wave[i])**2
+        Y = (wave[i] * np.conj(wave[i])).real
         x = x + Y * n
         x2 = x2 + Y * n * n
         n = n + 2

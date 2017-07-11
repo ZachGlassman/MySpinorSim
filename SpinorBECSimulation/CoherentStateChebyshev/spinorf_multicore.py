@@ -126,8 +126,7 @@ def calc_m_loop(queue, m, params):
                     time[t_step] = t
                     t_step += 1
     queue.put([time, sum_of_means, sum_of_meansq, norm])
-    # return index,time, sum_of_means, sum_of_meansq, norm
-
+  
 
 def write_out(filename, b_field, n_0, c_init, n_tot, mag, mag_range, atom_range,
               spinor_phase, init_state_solver, propogate, delta_t, emw, eqz,
