@@ -43,7 +43,21 @@ def chebyshev_propagator(time_step, psi, n_tot, e, d):
     
     Parameters
     ----------
+    time_step : float
+        simulation time step
+    psi : np.array(complex)
+        wavefunction
+    n_tot : int
+        total number of atoms
+    d : np.array(complex)
+        diagonal elements of Hamiltonian
+    e : np.array(complex)
+        off diagonal elements of Hamiltonian
     
+    Returns
+    -------
+    psi : np.array(complex)
+        propogated wavefunction
     """
     epsilon = 1e-15
     #estimate upper bound with asymptotic form

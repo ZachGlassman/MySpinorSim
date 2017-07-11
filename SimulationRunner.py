@@ -54,8 +54,8 @@ from SpinorBECSimulation.CoherentStateChebyshev.spinorf import solve_system as c
 from SpinorBECSimulation.CoherentStateChebyshev.spinorf_multicore import solve_system as cheby_sim_p
 
 #parallel or serial
-cheby_sim = cheby_sim_p
-#cheby_sim = cheby_sim_s
+#cheby_sim = cheby_sim_p
+cheby_sim = cheby_sim_s
 
 def color_text(text, color):
     """Function color text

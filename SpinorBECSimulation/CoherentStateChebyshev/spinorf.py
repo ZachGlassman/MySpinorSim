@@ -9,7 +9,7 @@ import numpy as np
 import math
 from .hamiltonian import setup_scaled_H, moments
 from .ChebyshevPropagator import chebyshev_propagator
-from numba import autojit
+import numba
 import sys
 from tqdm import trange
 
@@ -18,26 +18,51 @@ def find_nmax(tot,m):
     return (tot-abs(m)-first)/2+1
 
 def alpha_help(a,n):
-    """helper function, here a is alpha_ and n is n_"""
+    """function to compute some approximations
+    
+    Parameters
+    ----------
+    a : complex
+        number
+    n : int
+        number
+    
+    Returns
+    ln : complex
+        approximation
+    """
     if a.real == 0 and a.imag == 0:
         if n == 0:
             ln = np.complex(0,0)
         else:
             ln = np.complex(-1e200,0)
 
-    elif n >= 7:
+    elif n >= 300:
         ln = n *np.log(a)- (n*np.log(n)-n + np.log(2*np.pi*n)/2)/2
     else:
-        ln = n * np.log(a) - np.log(math.factorial(int(n)))/2
+        ln = n * np.log(a) - math.log(math.factorial(int(n)))/2
     return ln
+    
 
-@autojit
+@numba.jit
 def find_norm(z):
-    """find complex norm^2 of a vector of complex numbers"""
+    """find complex norm^2 of a vector of complex numbers
+    
+    Parameters
+    ----------
+    z : np.array(complex)
+        complex vector
+    
+    Returns
+    -------
+    k : float
+        norm squared of z
+    """
     k = 0
     for i in z:
-        k = k + abs(i)**2
+        k = k + (i * np.conj(i)).real
     return k
+    
 
 def write_out(filename, b_field, n_0, c_init, n_tot, mag, mag_range, atom_range,
               spinor_phase, init_state_solver, propogate, delta_t, emw, eqz,
@@ -83,7 +108,6 @@ def write_out(filename, b_field, n_0, c_init, n_tot, mag, mag_range, atom_range,
 def solve_system(b_field, n_tot,mag, mag_range, atom_range,spinor_phase, n_0,
                  ndiv, delta_t,c, emw, n_step):
     """Solve coherent state"""
-    #now we want to allocate numpy array
     eqz = np.real(0.0277 * b_field**2)
     sum_of_means = np.zeros(sum(n_step)+1) #one for each time step
     sum_of_meansq = np.zeros(sum(n_step)+1)
@@ -97,7 +121,7 @@ def solve_system(b_field, n_tot,mag, mag_range, atom_range,spinor_phase, n_0,
     if (n_tot - n_0 + mag) < 1e-20:
         alpha_plus = np.complex(0,0)
     else:
-        alpha_plus = np.complex(np.sqrt(mag+(n_tot-n_0-mag)/2),0)
+        alpha_plus = np.complex(np.sqrt(mag+(n_tot-n_0-mag)/2), 0)
 
     if (n_tot - n_0 - mag) < 1e-20:
         alpha_minus = np.complex(0,0)
