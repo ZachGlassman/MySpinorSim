@@ -19,9 +19,20 @@ from tqdm import trange
 def ynplus1(func, yn,t,dt,**kwargs):
     """evolve Runge kutta with function func which takes two input arguments
     yn and t and possibly extra arguments
-    :param yn: value at the previous iteration
-    :param t: the time at current iteration
-    :param dt: time step
+    
+    Parameters
+    ------------
+    yn : iterable
+        value at the previous iteration
+    t : float
+        the time at current iteration
+    dt : float
+        time step
+        
+    Returns
+    -----------
+    yn : iterable
+        evolution of wavefunction after one step
     """
     k1 = func(yn,t,**kwargs)
     k2 =  func(yn+dt/2*k1,t+dt/2,**kwargs)
@@ -66,8 +77,25 @@ def calculate_magnetic_field(total_time,dt,tauB):
 
 @autojit
 def tri_ham(c,bfield,psi,n_atoms):
-    '''compute the tridiagonal hamiltonian for fock state'''
-    ans = np.empty(len(psi), dtype = complex)
+    '''compute the tridiagonal hamiltonian for fock state
+    
+    Parameters
+    ----------
+    c : float
+        quadratic zeeman shift
+    bfield : float
+        magnetic field in hz
+    psi : np.array(complex)
+        wavefunction
+    n_atoms : int
+        total number of atoms
+        
+    Returns
+    -------
+    ans : np.array(complex)
+        1d Hamiltonian in pairs basis.
+    '''
+    ans = np.empty(len(psi), dtype=complex)
     #first for diagonal interation
     for i in range(len(psi)):
         ans[i] = (i*(2*(n_atoms-2*i))-1)* c/n_atoms*psi[i] + 2 * bfield * i*psi[i]

@@ -23,7 +23,38 @@ def msqr(x):
 
 #first define the system dy/dt = f(y,t)
 def f(t,y,B,p1,p0,pm1,qu1,qu0,qum1,q1,q0,qm1,c):
-    """system of ode we want to solve"""
+    """compute derivative of semi-classical wavefunction
+    
+    Parameters
+    ----------
+    t : float
+        time
+    y : np.array(complex)
+        wavefunction at current time step
+    B : float
+        magnetic field
+    p1 : float
+        linear zeeman shift (2 pi f) for m_f=+1 state
+    p0 : float
+        linear zeeman shift (2 pi f) for m_f=0 state
+    pm1 : float
+        linear zeeman shift (2 pi f) for m_f=-1 state
+    qu1 : float
+        real quadratic zeeman shift for m_f=+1
+    qu0 : float
+        real quadratic zeeman shift for m_f=0
+    qum1 : float
+        real quadratic zeeman shift for m_f=-1
+    q1 : float
+        effective quadratic zeeman shift for m_f=+1
+    q0 : float
+        effective quadratic zeeman shift for m_f=0
+    qm1 : float
+        effective quadratic zeeman shift for m_f=-1
+    c : float
+        spinor interaction energy
+    
+    """
     z1i = y[0]
     z0i = y[1]
     zmi = y[2]
