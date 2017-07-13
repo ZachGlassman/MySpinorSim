@@ -4,26 +4,26 @@ SpinorBECSimulation\.CoherentStateChebyshev package
 Submodules
 ----------
 
-SpinorBECSimulation\.CoherentStateChebyshev\.ChebyshevPropagator module
------------------------------------------------------------------------
+SpinorBECSimulation\.CoherentStateChebyshev\.chebyshev\_functions module
+------------------------------------------------------------------------
 
-.. automodule:: SpinorBECSimulation.CoherentStateChebyshev.ChebyshevPropagator
+.. automodule:: SpinorBECSimulation.CoherentStateChebyshev.chebyshev_functions
     :members:
     :undoc-members:
     :show-inheritance:
 
-SpinorBECSimulation\.CoherentStateChebyshev\.hamiltonian module
----------------------------------------------------------------
+SpinorBECSimulation\.CoherentStateChebyshev\.chebyshev\_functions\_numba module
+-------------------------------------------------------------------------------
 
-.. automodule:: SpinorBECSimulation.CoherentStateChebyshev.hamiltonian
+.. automodule:: SpinorBECSimulation.CoherentStateChebyshev.chebyshev_functions_numba
     :members:
     :undoc-members:
     :show-inheritance:
 
-SpinorBECSimulation\.CoherentStateChebyshev\.simulation\_plotter module
------------------------------------------------------------------------
+SpinorBECSimulation\.CoherentStateChebyshev\.chebyshev\_propagator module
+-------------------------------------------------------------------------
 
-.. automodule:: SpinorBECSimulation.CoherentStateChebyshev.simulation_plotter
+.. automodule:: SpinorBECSimulation.CoherentStateChebyshev.chebyshev_propagator
     :members:
     :undoc-members:
     :show-inheritance:
