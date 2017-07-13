@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun  4 20:43:56 2015
-Code for Spinor Solution from Arne
-This is will propgate a Hermition matrix with eigenvalues between -1 and 1
 @author: zag
 """
 import numpy as np
 from scipy.special import jv
-from .hamiltonian import hamiltonian_c
 
-#going to define better multiplication function
-
+#we will try to import with numba, if not fall back on numpy versions
+try:
+    import numba
+    from .chebyshev_functions_numba import hamiltonian_c
+except ImportError:
+    from .chebyshev_functions import hamiltonian_c
 
 def dbesj(x, alpha, n):
     """sequence of bessel functions where n is the number of elements of a bessel function of

@@ -7,9 +7,12 @@ This is the python version of spinorf with multicore processing
 import time as timemod
 import numpy as np
 import math
-from .hamiltonian import setup_scaled_H, moments
-from .ChebyshevPropagator import chebyshev_propagator
-import numba
+try:
+    import numba
+    from .chebyshev_functions_numba import setup_scaled_H, moments, find_norm
+except ImportError:
+    from .chebyshev_functions import setup_scaled_H, moments, find_norm
+    
 from multiprocessing import Process, Queue
 # first we have initization variables
 
@@ -34,14 +37,6 @@ def alpha_help(a, n):
         ln = n * np.log(a) - np.log(math.factorial(int(n))) / 2
     return ln
 
-
-@numba.jit
-def find_norm(z):
-    """find complex norm^2 of a vector of complex numbers"""
-    k = 0
-    for i in z:
-        k = k + (i * np.conj(i)).real
-    return k
 
 
 def calc_m_loop(queue, m, params):

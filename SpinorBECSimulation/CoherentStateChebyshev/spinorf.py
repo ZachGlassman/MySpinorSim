@@ -7,9 +7,13 @@ This is the python version of spinorf so I can understand whats going on
 import time as timemod
 import numpy as np
 import math
-from .hamiltonian import setup_scaled_H, moments
-from .ChebyshevPropagator import chebyshev_propagator
-import numba
+try:
+    import numba
+    from .chebyshev_functions_numba import setup_scaled_H, moments, find_norm
+except ImportError:
+    from .chebyshev_functions import setup_scaled_H, moments, find_norm
+
+from .chebyshev_propagator import chebyshev_propagator
 import sys
 from tqdm import trange
 
@@ -42,26 +46,6 @@ def alpha_help(a,n):
     else:
         ln = n * np.log(a) - math.log(math.factorial(int(n)))/2
     return ln
-    
-
-@numba.jit
-def find_norm(z):
-    """find complex norm^2 of a vector of complex numbers
-    
-    Parameters
-    ----------
-    z : np.array(complex)
-        complex vector
-    
-    Returns
-    -------
-    k : float
-        norm squared of z
-    """
-    k = 0
-    for i in z:
-        k = k + (i * np.conj(i)).real
-    return k
     
 
 def write_out(filename, b_field, n_0, c_init, n_tot, mag, mag_range, atom_range,

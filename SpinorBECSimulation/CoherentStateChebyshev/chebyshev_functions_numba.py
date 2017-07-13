@@ -1,10 +1,15 @@
-# -*- coding: utf-8 -*-
-"""
-Hamiltonian functions
-"""
 import numpy as np
 import numba
 
+@numba.jit
+def find_norm(z):
+    """find complex norm^2 of a vector of complex numbers"""
+    k = 0
+    for i in z:
+        k = k + (i * np.conj(i)).real
+    return k
+    
+    
 @numba.jit
 def setup_scaled_H(q, c, n, m, nmaxfinal):
     """function to setup tridigonal Hamiltonian if first, return d,e
@@ -146,8 +151,3 @@ def moments(wave, n):
         x2 = x2 + Y * n * n
         n = n + 2
     return x, x2
-    
-
-    
-    
-    
