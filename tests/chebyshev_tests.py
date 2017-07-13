@@ -14,7 +14,7 @@ class test_moments(object):
         (62.0, 228.0),
         (604, 3616)
         ]
-    
+        
     def test_numba(self):
         for arr, out in zip(complex_arrays, self.outputs):
             assert_equal(cf_n.moments(*arr), out)
@@ -22,5 +22,16 @@ class test_moments(object):
     def test_no_numba(self):
         for arr, out in zip(complex_arrays, self.outputs):
             assert_equal(cf.moments(*arr), out)
+            
+class test_find_norm(object):
+    outputs = [18, 101]
+    
+    def test_numba(self):
+        for arr, out in zip(complex_arrays, self.outputs):
+            assert_equal(cf_n.find_norm(arr[0]), out)
+            
+    def test_no_numba(self):
+        for arr, out in zip(complex_arrays, self.outputs):
+            assert_equal(cf.find_norm(arr[0]), out)
         
     

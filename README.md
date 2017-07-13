@@ -1,4 +1,4 @@
-# Spinor Bec Simulation
+# Spinor Bec Simulation [![Build Status](https://travis-ci.org/ZachGlassman/SpinorBECSimulation.svg?branch=master)](https://travis-ci.org/ZachGlassman/SpinorBECSimulation)
 
 ## Overview
 This repository contains several codes for simulation of Spinor Bose Einstein Condenstates.  They draw heavily on codes written by the Chapman group (Georgia Tech), Schwettman group (Oklahoma), and Eite Tsienga (NIST).
