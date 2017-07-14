@@ -43,6 +43,14 @@ SpinorBECSimulation\.CoherentStateChebyshev\.spinorf\_multicore module
     :members:
     :undoc-members:
     :show-inheritance:
+    
+SpinorBECSimulation\.CoherentStateChebyshev\.spinorf\_dask module
+----------------------------------------------------------------------
+
+.. automodule:: SpinorBECSimulation.CoherentStateChebyshev.spinorf_dask
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 
 Module contents
