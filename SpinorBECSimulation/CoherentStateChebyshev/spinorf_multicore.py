@@ -12,30 +12,12 @@ try:
     from .chebyshev_functions_numba import setup_scaled_H, moments, find_norm
 except ImportError:
     from .chebyshev_functions import setup_scaled_H, moments, find_norm
-    
+
+from .chebyshev_functions import alpha_help, find_nmax
+
 from multiprocessing import Process, Queue
 # first we have initization variables
 
-
-def find_nmax(tot, m):
-    first = np.mod(tot - abs(m), 2)
-    return (tot - abs(m) - first) / 2 + 1
-
-
-def alpha_help(a, n):
-    """helper function, here a is alpha_ and n is n_"""
-    if a.real == 0 and a.imag == 0:
-        if n == 0:
-            ln = np.complex(0, 0)
-        else:
-            ln = np.complex(-1e200, 0)
-
-    elif n >= 7:
-        ln = n * np.log(a) - (n * np.log(n) - n +
-                              np.log(2 * np.pi * n) / 2) / 2
-    else:
-        ln = n * np.log(a) - np.log(math.factorial(int(n))) / 2
-    return ln
 
 
 

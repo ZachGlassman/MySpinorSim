@@ -8,7 +8,7 @@ config = {
     'author_email': 'zach.glassman@gmail.com',
     'url': '',
     'description': '',
-    'long_description': open('README.rst', 'r').read(),
+    'long_description': open('README.md', 'r').read(),
     'license': 'MIT',
     'version': '0.0.1',
     'install_requires': [],

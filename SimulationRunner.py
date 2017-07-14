@@ -53,6 +53,11 @@ from SpinorBECSimulation.FullQuantumFock.FockStateSimulation import fock_sim
 from SpinorBECSimulation.CoherentStateChebyshev.spinorf import solve_system as cheby_sim_s
 from SpinorBECSimulation.CoherentStateChebyshev.spinorf_multicore import solve_system as cheby_sim_p
 
+try:
+    import colorama
+except ImportError:
+    pass
+
 #parallel or serial
 #cheby_sim = cheby_sim_p
 cheby_sim = cheby_sim_s
